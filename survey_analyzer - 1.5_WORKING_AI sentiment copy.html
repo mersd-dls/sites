@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Response Analyzer</title>
+    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #008959 0%, #02db59 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .upload-area {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area.dragover {
+            background: #f8f9ff;
+            transform: scale(1.02);
+        }
+
+        .upload-box {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-box:hover, .upload-box.dragover {
+            border-color: #764ba2;
+            background: #f8f9ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .question-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .question-header {
+            background: linear-gradient(135deg, #264733 0%, #2a6144 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .question-title {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .question-stats {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .question-content {
+            padding: 30px;
+        }
+
+        .summary {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        .wordcloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+            overflow: hidden;
+        }
+
+        .word {
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .word:hover {
+            transform: scale(1.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 MERSD Survey Response Analyzer</h1>
+        
+        <div id="upload-area" class="upload-area">
+            <div class="upload-box" id="upload-box">
+                <div class="upload-icon">📁</div>
+                <h3>Drop your CSV file here or click to select</h3>
+                <p>Supports CSV files with survey response columns</p>
+                <input type="file" id="file-input" accept=".csv">
+                
+                <div style="margin: 20px 0;">
+                    <label for="api-key" style="display: block; margin-bottom: 8px; font-weight: bold;">
+                        OpenAI API Key (optional - for AI summaries):
+                    </label>
+                    <input type="password" id="api-key" placeholder="sk-..." 
+                         onclick="event.stopPropagation()"
+                        style="width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                    <small style="display: block; margin-top: 5px; color: #666;">
+                        Leave blank to use basic analysis only
+                    </small>
+                </div>
+                
+                <button class="btn" onclick="document.getElementById('file-input').click()">
+                    Choose File
+                </button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            Analyzing responses...
+        
+	<div id="progress-container" style="margin-top: 20px; width: 80%; max-width: 500px; margin-left: auto; margin-right: auto;">
+    <div style="background: rgba(255,255,255,0.3); border-radius: 20px; overflow: hidden; height: 20px;">
+        <div id="progress-bar" style="width: 0%; height: 100%; background: #9051fd; transition: width 1s;"></div>
+    </div>
+    <p id="progress-status" style="margin-top: 10px; font-size: 0.9em; color: white;">Starting analysis…</p>
+</div>
+	</div>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+       // Predefined themes for each question type
+const questionThemes = {
+    // Question 1: What are the implications of these objectives on your work?
+    "implications": [
+        "Increased Workload", "Curriculum Changes", "Assessment Modifications", 
+        "Professional Development Needs", "Resource Requirements", "Time Management", 
+        "Student Impact", "Collaboration Changes", "Data Collection/Analysis", 
+        "Technology Integration", "Differentiation Demands", "Administrative Tasks", 
+        "Classroom Management", "Parent/Community Engagement", "Stress/Overwhelm",
+        // New additions
+        "Instructional Shifts", "SEL Integration", "Inclusive Practices", "UDL Implementation", 
+        "Cultural Relevance", "Equity and Access", "Student Engagement", "Higher-Order Thinking", 
+        "Vision of the Graduate Alignment", "Leadership Responsibilities", "Cross-Disciplinary Collaboration", 
+        "Increased Planning Time", "Change Fatigue", "Consistency Across Grade Levels", "Balancing Priorities"
+    ],
+
+    // Question 2: What support would you need to meet expectations?
+    "support": [
+        "Professional Development", "Time Allocation", "Material Resources", 
+        "Technology Support", "Administrative Support", "Collaborative Time", 
+        "Mentoring/Coaching", "Reduced Class Sizes", "Funding/Budget", 
+        "Communication Clarity", "Flexibility/Autonomy", "Data Tools/Training", 
+        "Substitute Coverage", "Facilities/Space", "Student Support Services",
+        // New additions
+        "Mental Health Resources", "Curriculum Guidance", "Clear Expectations", "Consistency Across Schools", 
+        "Family/Community Partnerships", "Equity Supports", "Language/Translation Resources", 
+        "Behavioral Support", "Leadership Opportunities", "Onsite Specialists", "Access to Research/Best Practices", 
+        "Protected Planning Time", "Simplified Administrative Processes", "Clarity on Evaluation", "Dedicated SEL Resources"
+    ],
+
+    // Question 3: What are 2-3 actionable steps the district should take to achieve these goals?
+    "steps": [
+        "Increase Professional Development", "Improve Communication", "Provide More Resources", 
+        "Reduce Administrative Burden", "Enhance Technology Infrastructure", "Create Collaborative Structures", 
+        "Hire Additional Staff", "Improve Facilities", "Establish Clear Timelines", 
+        "Increase Teacher Voice", "Provide Implementation Support", "Address Workload Issues", 
+        "Improve Student Support Services", "Focus on Data-Driven Decisions",
+        // New additions
+        "Expand SEL Programs", "Adopt Inclusive Curriculum", "Strengthen Family Engagement", 
+        "Streamline Assessments", "Prioritize Equity Initiatives", "Embed Vision of the Graduate", 
+        "Enhance Multilingual Learner Support", "Invest in Leadership Development", "Increase Transparency", 
+        "Simplify Processes", "Expand Student Leadership Opportunities", "Align Across Grade Levels", 
+        "Pilot Authentic Learning Models", "Develop Clear Accountability Structures", "Sustain Long-Term Funding"
+    ]
+};
+
+        // Auto-detect question type based on keywords
+        function detectQuestionType(question) {
+            const q = question.toLowerCase();
+            if (q.includes('implications') || q.includes('impact') || q.includes('affect') || q.includes('your work')) {
+                return 'implications';
+            } else if (q.includes('support') || q.includes('need') || q.includes('help') || q.includes('expectations')) {
+                return 'support';
+            } else if (q.includes('steps') || q.includes('actions') || q.includes('district should') || q.includes('achieve')) {
+                return 'steps';
+            }
+            // Default fallback - use implications themes
+            return 'implications';
+        }
+
+        // AI-powered theme analysis
+        async function analyzeThemes(responses, themes, apiKey) {
+            if (!apiKey || !apiKey.startsWith('sk-') || themes.length === 0) {
+                console.log('Skipping theme analysis - no API key or themes');
+                return {};
+            }
+
+            console.log('Analyzing themes with AI:', themes);
+
+            const prompt = `Analyze these survey responses and score how much each response relates to each theme. Rate each theme from 0-3 for each individual response, then ADD UP the total scores across all responses:
+
+0 = Not mentioned/irrelevant
+1 = Briefly mentioned or implied
+2 = Clearly addressed or discussed  
+3 = Major focus or primary concern
+
+For example: If 10 responses clearly address "Workload" (score=2 each), return "Workload": 20
+
+Themes to analyze: ${themes.join(', ')}
+
+Responses:
+${responses.slice(0, 150).join('\n---\n')}
+
+Return ONLY a JSON object with theme names as keys and TOTAL scores (sum across all responses) as values. Example:
+{"Increased Workload": 45, "Time Management": 12}`;
+
+            try {
+                console.log('Making theme analysis API request...');
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 600,
+                        temperature: 0.2
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Theme analysis API error:', errorText);
+                    return {};
+                }
+                
+                const data = await response.json();
+                const content = data.choices[0].message.content.trim();
+                console.log('Raw theme analysis response:', content);
+                
+                // Try to parse JSON response
+                try {
+                    const themeScores = JSON.parse(content);
+                    console.log('Parsed theme scores:', themeScores);
+                    return themeScores;
+                } catch (parseError) {
+                    // Try to extract JSON from response if wrapped in other text
+                    const jsonMatch = content.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const themeScores = JSON.parse(jsonMatch[0]);
+                        console.log('Extracted theme scores:', themeScores);
+                        return themeScores;
+                    }
+                    console.error('Could not parse theme analysis JSON:', content);
+                    return {};
+                }
+            } catch (error) {
+                console.error('Theme analysis error:', error);
+                return {};
+            }
+        }
+        const sentimentWords = {
+  positive: [
+    'good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'loved', 'loving', 'like', 'liked', 'enjoy', 'enjoyed', 'enjoying',
+    'happy', 'happier', 'happiest', 'pleased', 'satisfied', 'satisfying', 'satisfaction',
+    'effective', 'effectively', 'successful', 'success', 'succeed', 'succeeds', 'succeeding',
+    'beneficial', 'benefit', 'benefits', 'helpful', 'help', 'helps', 'helping', 'helped',
+    'positive', 'positively', 'strong', 'stronger', 'strongest', 'strength', 'impressive', 'impress', 'impressed', 'impressing',
+    'outstanding', 'perfect', 'perfectly', 'supportive', 'support', 'supports', 'supporting', 'supported',
+    'encouraging', 'encourage', 'encouraged', 'encourages',
+    'collaborative', 'collaboration', 'collaborate', 'collaborated', 'collaborating',
+    'engaged', 'engage', 'engages', 'engaging',
+    'motivated', 'motivate', 'motivates', 'motivating',
+    'inspired', 'inspire', 'inspires', 'inspiring',
+    'inclusive', 'inclusion', 'inclusivity',
+    'accessible', 'accessibility', 'innovative', 'innovation',
+    'creative', 'creativity', 'empowered', 'empower', 'empowers', 'empowering',
+    'confident', 'confidence', 'valued', 'value', 'values', 'valuable',
+    'respected', 'respect', 'respects', 'respectful', 'respecting',
+    'equitable', 'equity', 'fair', 'fairness',
+    'welcoming', 'welcome', 'welcomed',
+    'safe', 'safety', 'caring', 'care', 'cares', 'cared',
+    'nurturing', 'nurture', 'nurtures', 'nurtured',
+    'flexible', 'flexibility', 'adaptable', 'adaptability',
+    'clear', 'clarity', 'organized', 'organization',
+    'aligned', 'aligns', 'alignment',
+    'consistent', 'consistency', 'coherent', 'coherence',
+    'meaningful', 'meaning', 'authentic', 'authenticity',
+    'relevant', 'relevance', 'growth', 'growing', 'grow', 'grew',
+    'progress', 'progressing', 'progressive',
+    'improvement', 'improving', 'improved',
+    'achievement', 'achieve', 'achieves', 'achieved', 'achieving',
+    'success', 'successful', 'succeeding',
+    'thriving', 'thrive', 'thrives', 'thrived',
+    'high-quality', 'quality',
+    'rigorous', 'rigor', 'challenging', 'challenge', 'challenges', 'challenged',
+    'enriching', 'enrich', 'enriches', 'enriched',
+    'opportunity', 'opportunities',
+    'partnership', 'partnerships',
+    'collaboration', 'collaborations',
+    'connected', 'connect', 'connects', 'connecting', 'connection',
+    'community', 'communities',
+    'trust', 'trusts', 'trusted', 'trusting',
+    'responsive', 'response', 'respond', 'responds', 'responding',
+    'effective', 'effectiveness',
+    'efficient', 'efficiency',
+    'balanced', 'balance', 'balances', 'balancing',
+    'well-being', 'wellbeing',
+    'healthy', 'health', 'resilient', 'resilience',
+    'productive', 'productivity',
+    'prepared', 'prepare', 'prepares', 'preparing',
+    'competent', 'competence',
+    'capable', 'capability', 'capabilities',
+    'skilled', 'skill', 'skills',
+    'critical-thinking', 'critical thinker', 'problem-solving', 'problem-solver',
+    'leadership', 'leader', 'leaders', 'leading',
+    'engagement', 'engaging',
+    'ownership', 'own', 'owns', 'owned',
+    'empowering', 'empowerment',
+    'constructive', 'constructively',
+    'respectful', 'respectfully',
+    'inclusive-practices', 'diverse', 'diversity', 'representative', 'representation'
+  ],
+  negative: [
+    'bad', 'worse', 'worst', 'terrible', 'awful', 'horrible',
+    'hate', 'hated', 'hates', 'hating',
+    'dislike', 'disliked', 'dislikes', 'disliking',
+    'disappointing', 'disappoint', 'disappointed', 'disappoints',
+    'frustrated', 'frustrating', 'frustration',
+    'angry', 'anger',
+    'upset', 'concerned', 'concerns', 'worry', 'worried', 'worries', 'worrying',
+    'problem', 'problems',
+    'issue', 'issues',
+    'difficult', 'difficulty', 'difficulties',
+    'challenging', 'challenge', 'challenges', 'challenged',
+    'inadequate', 'inadequacy',
+    'insufficient', 'insufficiency',
+    'poor', 'poorer', 'poorest',
+    'weak', 'weaker', 'weakest', 'weakness', 'weaknesses',
+    'lacking', 'lack', 'lacks', 'lacked',
+    'missing', 'miss', 'misses', 'missed',
+    'overwhelmed', 'overwhelming',
+    'stressed', 'stress', 'stresses', 'stressful',
+    'burned-out', 'burned out', 'burn out', 'burning out', 'burnout',
+    'anxious', 'anxiety',
+    'confusing', 'confused', 'confuses', 'confusion',
+    'unclear', 'uncertainty', 'uncertain',
+    'inconsistent', 'inconsistency',
+    'disorganized', 'disorganization',
+    'unfair', 'unfairness',
+    'inequitable', 'inequity',
+    'unsafe', 'unsafely',
+    'isolated', 'isolation',
+    'excluded', 'exclusion',
+    'marginalized', 'marginalization',
+    'unsupported', 'unsupportive',
+    'neglected', 'neglect',
+    'ignored', 'ignoring',
+    'unheard',
+    'underprepared', 'under-prepared', 'underpreparedness',
+    'underresourced', 'under-resourced',
+    'limited', 'limit', 'limits', 'limiting',
+    'restrictive', 'restriction', 'restrictions',
+    'barrier', 'barriers',
+    'obstacle', 'obstacles',
+    'ineffective', 'ineffectiveness',
+    'unsuccessful', 'unproductive', 'unproductively',
+    'pointless', 'irrelevant', 'irrelevance',
+    'tokenistic', 'tokenism',
+    'misaligned', 'misalignment',
+    'contradictory', 'contradiction',
+    'fragmented', 'fragmentation',
+    'redundant', 'redundancy',
+    'bureaucratic', 'bureaucracy',
+    'time-consuming', 'time consuming',
+    'unrealistic', 'unsustainable',
+    'rigid', 'rigidity',
+    'narrow', 'narrowing',
+    'discouraging', 'discourage', 'discouraged', 'discourages',
+    'demoralizing', 'demoralize', 'demoralized',
+    'disengaged', 'disengage', 'disengages', 'disengaging',
+    'apathetic', 'apathy',
+    'resentful', 'resent', 'resented', 'resentment',
+    'resistant', 'resist', 'resists', 'resisted', 'resistance',
+    'opposed', 'oppose', 'opposes', 'opposing', 'opposition',
+    'pushback',
+    'strained', 'strain', 'straining',
+    'conflicted', 'conflict', 'conflicts', 'conflicting',
+    'toxic', 'toxicity',
+    'unhealthy',
+    'problematic', 'problemsome',
+    'unbalanced', 'imbalance',
+    'pressured', 'pressure', 'pressuring',
+    'inefficient', 'inefficiency',
+    'slow', 'slower', 'slowest',
+    'stalled', 'stall', 'stalling',
+    'behind', 'lagging',
+    'regressive', 'regress', 'regressed',
+    'burdened', 'burden', 'burdens', 'burdening',
+    'demanding', 'demand', 'demands', 'demanded',
+    'friction',
+    'shortage', 'shortages',
+    'gap', 'gaps',
+    'delay', 'delays', 'delayed',
+    'constraint', 'constraints',
+    'undervalued', 'undervalue', 'undervalues',
+    'dismissed', 'dismiss', 'dismisses', 'dismissing',
+    'unmet', 'unfulfilled'
+  ]
+}
+;
+
+        function analyzeSentiment(text) {
+            const words = text.toLowerCase().split(/\W+/);
+            let positiveScore = 0;
+            let negativeScore = 0;
+
+            words.forEach(word => {
+                if (sentimentWords.positive.includes(word)) positiveScore++;
+                if (sentimentWords.negative.includes(word)) negativeScore++;
+            });
+
+            if (positiveScore > negativeScore) return 'Positive';
+            if (negativeScore > positiveScore) return 'Negative';
+            return 'Neutral';
+        }
+	
+async function getAISentimentSummary(responses, apiKey) {
+    if (!apiKey || !apiKey.startsWith('sk-')) return null;
+    
+    try {
+        const prompt = `You are analyzing teacher feedback about a new district educational initiative. Classify each response's sentiment from a teacher's perspective about implementing these changes. Focus on the TONE and ATTITUDE, not just the content.
+
+IMPORTANT CONTEXT:
+- Teachers expressing concerns about workload, time, resources, or implementation challenges = NEGATIVE
+- Teachers expressing skepticism, putting terms in quotes, or questioning feasibility = NEGATIVE  
+- Teachers showing enthusiasm, support, or willingness despite challenges = POSITIVE
+- Teachers acknowledging both benefits and concerns = MIXED
+- Purely factual responses without emotional indicators = NEUTRAL
+
+For questions about needed supports, classify based on HOW teachers express their needs. Simply needing something isn't inherently negative in this context, but TONE and ATTITUDE are most indicative of sentiment:
+- POSITIVE: Constructive, specific, solution-oriented requests
+- NEGATIVE: Frustrated, overwhelmed, or defeatist tone about needing support  
+- NEUTRAL: Basic, factual listing of needs
+- MIXED: Acknowledging challenges but remaining constructive
+
+For questions about action steps, classify based on HOW teachers frame their suggestions:
+- POSITIVE: Enthusiastic, confident, or optimistic about proposed actions
+- NEGATIVE: Skeptical, pessimistic, or critical tone about feasibility
+- NEUTRAL: Basic, procedural suggestions without emotional tone
+- MIXED: Helpful suggestions but with concerns about implementation
+
+Classify each response as: "Positive", "Negative", "Neutral", or "Mixed"
+
+Teacher responses to analyze:
+${responses.slice(0, 400).map((response, i) => `${i + 1}. ${response}`).join('\n')}
+
+Return ONLY a JSON array like: ["Negative", "Positive", "Mixed", ...]`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 600,
+                temperature: 0.1
+            })
+        });
+
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        let text = data.choices[0].message.content.trim();
+        
+        // Remove any markdown formatting
+        text = text.replace(/```json\s*/, '').replace(/```\s*$/, '');
+        
+        try {
+            const sentiments = JSON.parse(text);
+            const sentimentCounts = {
+                'Positive': sentiments.filter(s => s === 'Positive').length,
+                'Negative': sentiments.filter(s => s === 'Negative').length,
+                'Neutral': sentiments.filter(s => s === 'Neutral').length,
+                'Mixed': sentiments.filter(s => s === 'Mixed').length
+            };
+            
+            console.log('AI classified first 5 responses as:', sentiments.slice(0, 5));
+            return { sentimentCounts, individualSentiments: sentiments };
+        } catch (e) {
+            console.log('JSON parsing failed, falling back to summary approach');
+            return null;
+        }
+    } catch (error) {
+        console.log('AI sentiment failed:', error);
+        return null;
+    }
+}
+
+
+        function extractThemes(responses) {
+            const allText = responses.join(' ').toLowerCase();
+            const words = allText.split(/\W+/).filter(word => word.length > 3);
+            
+            // Remove common stop words
+            const stopWords = ['this', 'that', 'with', 'have', 'will', 'from', 'they', 'been', 'than', 'were', 'said', 'each', 'which', 'their', 'time', 'more', 'very', 'what', 'know', 'just', 'first', 'into', 'over', 'think', 'also', 'your', 'work', 'life', 'only', 'new', 'years', 'way', 'may', 'say', 'would', 'will', 'the', 'like'];
+            
+            const filteredWords = words.filter(word => !stopWords.includes(word));
+            const wordCount = {};
+            
+            filteredWords.forEach(word => {
+                wordCount[word] = (wordCount[word] || 0) + 1;
+            });
+
+            return Object.entries(wordCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 25)
+                .map(([word, count]) => ({ word, count }));
+        }
+
+        function generateWordCloud(wordData) {
+            const maxCount = Math.max(...wordData.map(w => w.count));
+            return wordData.map(item => {
+                const size = Math.max(12, (item.count / maxCount) * 32);
+                const hue = Math.random() * 360;
+                return `<span class="word" style="font-size: ${size}px; background: hsl(${hue}, 70%, 85%); color: hsl(${hue}, 70%, 25%);">${item.word}</span>`;
+            }).join('');
+        }
+
+        function createChart(canvasId, type, data, options = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: type,
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    ...options
+                }
+            });
+        }
+
+        // Simple sentiment analysis using keyword matching
+        async function generateAISummary(question, responses, apiKey) {
+            console.log('Attempting AI summary with API key:', apiKey.substring(0, 10) + '...');
+            
+            if (!apiKey || !apiKey.startsWith('sk-')) {
+                console.log('No valid API key provided');
+                return null;
+            }
+
+            const prompt = `Analyze these teacher survey responses to: "${question}"
+
+Responses:
+${responses.slice(0, 400).join('\n')}
+
+Provide a 3-4 sentence summary covering:
+1. Overall sentiment and main themes
+2. Key concerns or positive points
+3. Actionable insights
+
+Keep it concise and professional.`;
+
+            try {
+                console.log('Making API request to OpenAI...');
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 800,
+                        temperature: 0.3
+                    })
+                });
+
+                console.log('API response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error Details:', errorText);
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('API response received:', data);
+                const summary = data.choices[0].message.content.trim();
+                console.log('Generated AI summary:', summary);
+                return summary;
+            } catch (error) {
+                console.error('AI summary error:', error);
+                alert(`AI Summary failed: ${error.message}`);
+                return null;
+            }
+        }
+
+        async function processData(csvData) {
+            console.log('Processing data...');
+            const apiKey = document.getElementById('api-key').value.trim();
+            const useAI = apiKey && apiKey.startsWith('sk-');
+            
+            const skipColumns = ['timestamp', 'email address', 'email', 'name'];
+            const questionColumns = csvData.meta.fields.filter(field => 
+                !skipColumns.some(skip => field.toLowerCase().includes(skip.toLowerCase()))
+            );
+
+            console.log('Question columns found:', questionColumns);
+            console.log('Using AI summaries:', useAI);
+            
+            const results = [];
+
+            for (let index = 0; index < questionColumns.length; index++) {
+                const question = questionColumns[index];
+                console.log(`Processing question ${index + 1}:`, question);
+                
+                const responses = csvData.data
+                    .map(row => row[question])
+                    .filter(response => response && response.trim() !== '');
+
+                console.log(`Found ${responses.length} valid responses`);
+
+                if (responses.length === 0) {
+                    console.log('No responses found, skipping');
+                    continue;
+                }
+
+                // Sentiment analysis with simple AI enhancement
+		console.log('Analyzing sentiments...');
+		let sentimentCounts;
+
+		const aiSentiment = useAI ? await getAISentimentSummary(responses, apiKey) : null;
+
+if (aiSentiment) {
+    sentimentCounts = aiSentiment.sentimentCounts;
+    individualSentiments = aiSentiment.individualSentiments;
+    console.log('Using AI sentiment counts:', sentimentCounts);
+} else {
+    // Your existing keyword approach
+    const sentiments = responses.map(analyzeSentiment);
+    sentimentCounts = {
+        'Positive': sentiments.filter(s => s === 'Positive').length,
+        'Neutral': sentiments.filter(s => s === 'Neutral').length,
+        'Negative': sentiments.filter(s => s === 'Negative').length
+    };
+    individualSentiments = sentiments; // Store individual keyword results too
+    console.log('Using keyword sentiment counts:', sentimentCounts);
+};
+                // Theme analysis (AI-powered or fallback to word frequency)
+                console.log('Analyzing themes...');
+                const questionType = detectQuestionType(question);
+                const availableThemes = questionThemes[questionType];
+                console.log('Detected question type:', questionType, 'with themes:', availableThemes);
+
+                let themeScores = {};
+                if (useAI) {
+                    themeScores = await analyzeThemes(responses, availableThemes, apiKey);
+                }
+                
+                // If AI analysis failed or no API key, fall back to word frequency
+                if (Object.keys(themeScores).length === 0) {
+                    console.log('Using fallback word frequency analysis');
+                    const wordFreq = extractThemes(responses);
+                    wordFreq.forEach(item => {
+                        themeScores[item.word] = item.count;
+                    });
+                }
+
+                // Convert theme scores to sorted array for visualization
+                const themes = Object.entries(themeScores)
+                    .map(([theme, score]) => ({ theme, score }))
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 12); // Top 12 themes
+
+                // Generate word cloud data (separate from themes)
+                const wordCloudData = extractThemes(responses);
+
+                // Generate summary
+                let aiSummary = null;
+                if (useAI) {
+                    console.log('Generating AI summary...');
+                    aiSummary = await generateAISummary(question, responses, apiKey);
+                }
+
+                const totalResponses = responses.length;
+                const avgLength = Math.round(responses.reduce((sum, r) => sum + r.length, 0) / totalResponses);
+                const topSentiment = Object.keys(sentimentCounts).reduce((a, b) => 
+                    sentimentCounts[a] > sentimentCounts[b] ? a : b
+                );
+
+                const basicSummary = `This question received ${totalResponses} responses with an overall ${topSentiment.toLowerCase()} tone. Top themes include: ${themes.slice(0, 3).map(t => t.theme).join(', ')}. The average response length was ${avgLength} characters.`;
+
+                console.log(`Question processed: ${totalResponses} responses, ${topSentiment} sentiment`);
+
+                results.push({
+                    question,
+                    responses,
+                    sentimentCounts,
+			individualSentiments,
+                    themes,
+                    wordCloudData,
+                    aiSummary,
+                    basicSummary,
+                    summary: {
+                        totalResponses,
+                        avgLength,
+                        topSentiment,
+                        topThemes: themes.slice(0, 3).map(t => t.theme).join(', ')
+                    }
+                });
+            }
+
+            console.log('All processing complete. Results:', results);
+            return results;
+        }
+	let globalResults = [];
+
+function exportSentimentData(questionIndex) {
+    const result = globalResults[questionIndex];
+    if (!result) return;
+    
+    // Create CSV data
+    const csvData = result.responses.map((response, i) => {
+        const sentiment = result.individualSentiments ? result.individualSentiments[i] : 'Keyword-based';
+        return {
+            response: response.replace(/"/g, '""'), // Escape quotes for CSV
+            sentiment: sentiment
+        };
+    });
+    
+    // Convert to CSV format
+    const csvContent = [
+        'Response,Sentiment', // Header
+        ...csvData.map(row => `"${row.response}","${row.sentiment}"`)
+    ].join('\n');
+    
+    // Create download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sentiment_analysis_question_${questionIndex + 1}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+        function renderResults(results) {
+		globalResults = results; // Store for export
+            const resultsDiv = document.getElementById('results');
+            const apiKey = document.getElementById('api-key').value.trim();
+            const useAI = apiKey && apiKey.startsWith('sk-');
+            resultsDiv.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const section = document.createElement('div');
+                section.className = 'question-section';
+                
+                section.innerHTML = `
+                    <div class="question-header">
+                        <div class="question-title">${result.question}</div>
+                        <div class="question-stats">
+                            ${result.summary.totalResponses} responses • 
+                            Avg ${result.summary.avgLength} chars • 
+                            Mostly ${result.summary.topSentiment.toLowerCase()}
+                        </div>
+                    </div>
+                    <div class="question-content">
+                        <div class="summary">
+                            <h4>Summary</h4>
+                            <p>${result.aiSummary || result.basicSummary}</p>
+                            ${result.aiSummary ? '<small style="color: #666;">✨ AI-generated summary</small>' : '<small style="color: #666;">📊 Basic analysis summary</small>'}
+
+			<!-- Add this export button -->
+   		 <button class="btn" onclick="exportSentimentData(${index})" style="margin-top: 15px; font-size: 14px; padding: 8px 16px;">
+        📊 Export Sentiment Data
+    </button>
+                        </div>
+                        
+                        <div class="charts-grid">
+                            <div class="chart-container">
+                                <div class="chart-title">Word Cloud</div>
+                                <div class="wordcloud">${generateWordCloud(result.wordCloudData)}</div>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <div class="chart-title">Sentiment Analysis</div>
+                                <canvas id="sentiment-${index}" width="400" height="300"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <div class="chart-title">Theme Distribution</div>
+                                <canvas id="themes-${index}" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                resultsDiv.appendChild(section);
+
+                // Create sentiment pie chart with proper colors for Mixed category
+const sentimentColors = {
+    'Positive': '#4ade80',    // Green
+    'Negative': '#f87171',    // Red  
+    'Neutral': '#94a3b8',     // Gray
+    'Mixed': '#fbbf24'        // Yellow/Orange
+};
+
+createChart(`sentiment-${index}`, 'pie', {
+    labels: Object.keys(result.sentimentCounts),
+    datasets: [{
+        data: Object.values(result.sentimentCounts),
+        backgroundColor: Object.keys(result.sentimentCounts).map(key => sentimentColors[key] || '#94a3b8'),
+        borderWidth: 2,
+        borderColor: '#fff'
+    }]
+});
+                // Create themes bar chart
+                createChart(`themes-${index}`, 'bar', {
+                    labels: result.themes.slice(0, 5).map(t => t.theme),
+                    datasets: [{
+                        label: useAI ? 'AI Theme Score' : 'Word Frequency',
+                        data: result.themes.slice(0, 5).map(t => t.score),
+                        backgroundColor: '#667eea',
+                        borderColor: '#764ba2',
+                        borderWidth: 2
+                    }]
+                }, {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: useAI ? 2 : 1
+                            }
+                        }
+                    }
+                });
+            });
+
+            resultsDiv.style.display = 'block';
+        }
+
+        async function handleFile(file) {
+            if (!Papa) {
+                alert('CSV parsing library failed to load. Please refresh the page and try again.');
+                return;
+            }
+            
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            console.log('Starting to process file:', file.name);
+            document.getElementById('upload-area').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+		startProgressBar();  
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async function(results) {
+                    console.log('CSV parsed successfully:', results);
+                    console.log('Number of rows:', results.data.length);
+                    console.log('Columns:', results.meta.fields);
+                    
+                    try {
+                        const processedData = await processData(results);
+                        console.log('Data processed successfully:', processedData);
+                        document.getElementById('loading').style.display = 'none';
+			stopProgressBar(); 
+                        renderResults(processedData);
+                    } catch (error) {
+                        console.error('Error processing data:', error);
+                        stopProgressBar();
+			alert('Error processing data: ' + error.message);
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('upload-area').style.display = 'block';
+                    }
+                },
+                error: function(error) {
+                    console.error('CSV parsing error:', error);
+		stopProgressBar();
+                    alert('Error parsing CSV: ' + error.message);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('upload-area').style.display = 'block';
+                }
+            });
+        }
+
+        // File upload handling
+        const uploadBox = document.getElementById('upload-box');
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+
+        uploadBox.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files[0]) handleFile(files[0]);
+        });
+
+	let progressInterval;
+let statusInterval;
+const progressMessages = [
+    "Cleaning responses...",
+    "Analyzing sentiment...",
+    "Detecting themes...",
+    "Summarizing responses...",
+    "Finalizing results..."
+];
+
+function startProgressBar() {
+    const bar = document.getElementById('progress-bar');
+    const status = document.getElementById('progress-status');
+    let progress = 0;
+    let messageIndex = 0;
+
+    // Reset
+    bar.style.width = '0%';
+    status.textContent = "Starting analysis…";
+
+    // Increment bar every second
+    progressInterval = setInterval(() => {
+        progress += Math.random() * 3 + 1; // add 1–4% each tick
+        if (progress > 100) progress = 100;
+        bar.style.width = progress + "%";
+    }, 1000);
+
+    // Change status message every 10–15s
+    statusInterval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % progressMessages.length;
+        status.textContent = progressMessages[messageIndex];
+    }, 12000); // ~12s per message, over ~60s
+}
+
+function stopProgressBar() {
+    clearInterval(progressInterval);
+    clearInterval(statusInterval);
+    const bar = document.getElementById('progress-bar');
+    const status = document.getElementById('progress-status');
+    bar.style.width = "100%";
+    status.textContent = "Analysis complete!";
+}
+
+    </script>
+</body>
+</html>
