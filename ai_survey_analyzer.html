@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MERSD Survey Response Analyzer</title>
+    <title>MERSD Survey Response Analyzer 2025</title>
     <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://unpkg.com/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
@@ -675,12 +675,12 @@ Return ONLY a JSON array like: ["Negative", "Positive", "Mixed", ...]`;
 Responses:
 ${responses.slice(0, 400).join('\n')}
 
-Provide a 3-4 big picture bullet points summarizing the responses to each question covering:
+Provide a 3-4 brief big picture bullet points summarizing the responses to each question covering:
 1. Overall sentiment and main themes
 2. Key concerns or positive points
 3. Actionable insights
 
-Keep it concise and professional. Begin the first bullet point with something like "The educators of MERSD"...`;
+Keep it concise and professional. Format as HTML bullet points using <ul> and <li> tags. Begin the first bullet point with something like "The educators of MERSD"...`;
 
             try {
                 console.log('Making API request to OpenAI...');
