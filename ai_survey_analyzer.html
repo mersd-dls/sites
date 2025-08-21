@@ -270,7 +270,7 @@ const questionThemes = {
         "Protected Planning Time", "Simplified Administrative Processes", "Clarity on Evaluation", "Dedicated SEL Resources"
     ],
 
-    // Question 3: What are 2-3 actionable steps the district should take to achieve these goals?
+    // Question 3: Recommend 2-3 actionable steps the district should take to achieve these objectives.
     "steps": [
         "Increase Professional Development", "Improve Communication", "Provide More Resources", 
         "Reduce Administrative Burden", "Enhance Technology Infrastructure", "Create Collaborative Structures", 
@@ -293,8 +293,9 @@ const questionThemes = {
                 return 'implications';
             } else if (q.includes('support') || q.includes('need') || q.includes('help') || q.includes('expectations')) {
                 return 'support';
-            } else if (q.includes('steps') || q.includes('actions') || q.includes('district should') || q.includes('achieve')) {
-                return 'steps';
+            } else if (q.includes('steps') || q.includes('actions') || q.includes('district should') || q.includes('achieve') || q.includes('recommend') || q.includes('actionable steps')) {
+       			return 'steps';
+    		}
             }
             // Default fallback - use implications themes
             return 'implications';
