@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>Classroom Streams</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        .stream-button {
+            background: white;
+            border: none;
+            border-radius: 20px;
+            padding: 30px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stream-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stream-button:hover::before {
+            left: 100%;
+        }
+
+        .stream-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .stream-button:active {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .stream-button.homeroom {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .stream-button.art {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .stream-button.technology {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .stream-button.library {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: white;
+        }
+
+        .stream-button.music {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+            color: white;
+        }
+
+        .video-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 1000;
+        }
+
+        .video-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-header {
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .video-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            flex-grow: 1;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .vlc-button {
+            background: #ff8800;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .vlc-button:hover {
+            background: #ff6600;
+        }
+
+        .close-button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .close-button:hover {
+            background: #dc2626;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            background: black;
+        }
+
+        .loading-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stream-button {
+                font-size: 1.5rem;
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Classroom Streams</h1>
+    
+    <div class="button-container">
+        <button class="stream-button homeroom" onclick="openStream('Homeroom', 'http://10.2.184.164/hls/1_0.m3u8')">
+            📚 Homeroom
+        </button>
+        
+        <button class="stream-button art" onclick="openStream('Art', 'http://10.2.184.164/hls/1_0.m3u8')">
+            🎨 Art
+        </button>
+        
+        <button class="stream-button technology" onclick="openStream('Technology', 'http://10.2.184.164/hls/1_0.m3u8')">
+            💻 Technology
+        </button>
+        
+        <button class="stream-button library" onclick="openStream('Library', 'http://10.2.184.164/hls/1_0.m3u8')">
+            📖 Library
+        </button>
+        
+        <button class="stream-button music" onclick="openStream('Music', 'http://10.2.184.164/hls/1_0.m3u8')">
+            🎵 Music
+        </button>
+    </div>
+
+    <div id="videoContainer" class="video-container">
+        <div class="video-header">
+            <span class="video-title" id="videoTitle">Classroom Stream</span>
+            <div class="header-buttons">
+                <button class="vlc-button" id="vlcButton" onclick="openInVLC()">
+                    ⚡ Low-Delay View
+                </button>
+                <button class="close-button" onclick="closeStream()">Close</button>
+            </div>
+        </div>
+        <div style="position: relative; flex-grow: 1;">
+            <video id="videoPlayer" controls autoplay playsinline></video>
+            <div class="loading-message" id="loadingMessage">
+                Loading stream...<br>
+                <small>If the stream doesn't load, you may need to open it in VLC</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- HLS.js library for HLS stream support -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        // Stream URLs - UPDATE THESE WITH YOUR ACTUAL HLS URLS
+        const streamUrls = {
+            'Homeroom': 'http://10.2.184.164/hls/1_0.m3u8',
+            'Art': 'http://10.2.184.164/hls/1_0.m3u8',      // Replace with actual Art room URL
+            'Technology': 'http://10.2.184.164/hls/1_0.m3u8', // Replace with actual Technology room URL
+            'Library': 'http://10.2.184.164/hls/1_0.m3u8',   // Replace with actual Library room URL
+            'Music': 'http://10.2.184.164/hls/1_0.m3u8'      // Replace with actual Music room URL
+        };
+
+        // RTSP URLs for VLC (low-delay) - UPDATE THESE WITH YOUR ACTUAL RTSP URLS
+        const rtspUrls = {
+            'Homeroom': 'rtsp://10.2.184.164:554/live/1_0',
+            'Art': 'rtsp://10.2.184.164:554/live/1_0',      // Replace with actual Art room RTSP URL
+            'Technology': 'rtsp://10.2.184.164:554/live/1_0', // Replace with actual Technology room RTSP URL
+            'Library': 'rtsp://10.2.184.164:554/live/1_0',   // Replace with actual Library room RTSP URL
+            'Music': 'rtsp://10.2.184.164:554/live/1_0'      // Replace with actual Music room RTSP URL
+        };
+
+        let currentClassroom = '';
+
+        function openStream(classroom, url) {
+            const videoContainer = document.getElementById('videoContainer');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const videoTitle = document.getElementById('videoTitle');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            // Store current classroom for VLC button
+            currentClassroom = classroom;
+            
+            // Update title
+            videoTitle.textContent = classroom + ' Stream';
+            
+            // Show video container
+            videoContainer.classList.add('active');
+            
+            // Check if HLS is natively supported (Safari usually supports it)
+            if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                // Native HLS support (Safari)
+                console.log('Native HLS support detected');
+                videoPlayer.src = url;
+                videoPlayer.play().catch(e => {
+                    console.error('Playback failed:', e);
+                    loadingMessage.innerHTML = `
+                        Error loading stream.<br>
+                        <small>Error: ${e.message}</small>
+                    `;
+                });
+            } else if (Hls.isSupported()) {
+                // Use HLS.js for browsers without native support
+                console.log('Using HLS.js');
+                const hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+                
+                hls.loadSource(url);
+                hls.attachMedia(videoPlayer);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    videoPlayer.play().catch(e => {
+                        console.error('Playback failed:', e);
+                    });
+                });
+                
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    console.error('HLS.js error:', data);
+                    if (data.fatal) {
+                        loadingMessage.innerHTML = `
+                            Error loading stream.<br>
+                            <small>HLS Error: ${data.type}</small>
+                        `;
+                    }
+                });
+                
+                // Store HLS instance for cleanup
+                videoPlayer.hls = hls;
+            } else {
+                // No HLS support
+                loadingMessage.innerHTML = `
+                    Your browser doesn't support HLS streams.<br>
+                    <small>Please use Safari on iPad or a modern browser.</small>
+                `;
+            }
+            
+            // Hide loading message when video starts playing
+            videoPlayer.onloadeddata = function() {
+                loadingMessage.style.display = 'none';
+            };
+            
+            // Additional error handling
+            videoPlayer.onerror = function(e) {
+                console.error('Video error:', e);
+                loadingMessage.innerHTML = `
+                    Unable to load stream.<br>
+                    <small>Please check the connection and try again.</small>
+                `;
+            };
+        }
+
+        function openInVLC() {
+            // Get the RTSP URL for the current classroom
+            const rtspUrl = rtspUrls[currentClassroom];
+            
+            // Try to open in VLC using the vlc:// URL scheme
+            // This should launch VLC on iPad if it's installed
+            window.location.href = 'vlc://' + rtspUrl;
+            
+            // Optionally close the web player after a delay
+            // You can comment this out if you want to keep the web player open
+            setTimeout(() => {
+                closeStream();
+            }, 1000);
+        }
+
+        function closeStream() {
+            const videoContainer = document.getElementById('videoContainer');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            // Hide container
+            videoContainer.classList.remove('active');
+            
+            // Clean up HLS.js instance if it exists
+            if (videoPlayer.hls) {
+                videoPlayer.hls.destroy();
+                videoPlayer.hls = null;
+            }
+            
+            // Stop and clear video
+            videoPlayer.pause();
+            videoPlayer.src = '';
+            
+            // Reset loading message
+            loadingMessage.style.display = 'block';
+            loadingMessage.innerHTML = `
+                Loading stream...<br>
+                <small>If the stream doesn't load, you may need to open it in VLC</small>
+            `;
+        }
+
+        // Add keyboard support for accessibility
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeStream();
+            }
+        });
+    </script>
+</body>
+</html>
