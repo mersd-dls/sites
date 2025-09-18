@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunch Choice Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            touch-action: none;
+            transition: background 0.5s ease;
+        }
+
+        /* Color Palettes */
+        .palette-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .palette-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .palette-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .palette-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .palette-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .palette-5 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .palette-6 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .palette-7 { background: linear-gradient(135deg, #30336b 0%, #130f40 100%); }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .setup-page {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+
+        .setup-page h2 {
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .palette-selector {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .palette-selector h3 {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .palette-grid {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .palette-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .palette-option:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .palette-option.selected {
+            border-color: white;
+            border-width: 4px;
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.4);
+        }
+
+        .palette-note {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+            font-style: italic;
+        }
+
+        .setup-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 25px;
+            resize: vertical;
+            background: rgba(255,255,255,0.95);
+        }
+
+        .setup-textarea::placeholder {
+            color: #666;
+            font-style: italic;
+        }
+
+        .generate-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .generate-btn:hover {
+            background: #3d8bfe;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .url-result {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .url-result h3 {
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .url-display {
+            background: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 5px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .url-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn, .load-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover, .load-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-group label {
+            color: white;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 250px;
+        }
+
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            min-height: 500px;
+        }
+
+        .students-section {
+            flex: 1;
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .choices-section {
+            flex: 2;
+            display: flex;
+            gap: 15px;
+        }
+
+        .section-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .students-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .student-puck {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: move;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .student-puck:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .student-puck.dragging {
+            transform: rotate(5deg) scale(1.1);
+            z-index: 1000;
+            opacity: 0.8;
+        }
+
+        .choice-column {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 3px dashed rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .choice-column.drag-over {
+            border-color: #4facfe;
+            background: rgba(79, 172, 254, 0.2);
+            transform: scale(1.02);
+        }
+
+        .choice-title {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .choice-title input {
+            background: transparent;
+            border: none;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            width: 100%;
+        }
+
+        .choice-title input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .choice-students {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .choice-count {
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .student-in-choice {
+            background: linear-gradient(135deg, #a8e6cf 0%, #7fcdcd 100%);
+            color: #2c3e50;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            margin: 3px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: move;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .student-in-choice:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .choices-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍽️ Lunch Choice Board 🍽️</h1>
+    </div>
+
+    <!-- Setup Page -->
+    <div id="setupPage" class="setup-page">
+        <h2>Create Your Lunch Choice Board</h2>
+        <p>Choose your color theme and enter your students' names to generate your personalized lunch choice board.</p>
+        
+        <div class="palette-selector">
+            <h3>Choose Your Color Theme:</h3>
+            <div class="palette-grid">
+                <div class="palette-option" data-palette="0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" title="Classic Purple"></div>
+                <div class="palette-option" data-palette="1" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" title="Berry Blast"></div>
+                <div class="palette-option" data-palette="2" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" title="Ocean Blue"></div>
+                <div class="palette-option" data-palette="3" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" title="Fresh Green"></div>
+                <div class="palette-option" data-palette="4" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);" title="Sunset Glow"></div>
+                <div class="palette-option" data-palette="5" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);" title="Soft Pastels"></div>
+                <div class="palette-option" data-palette="6" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);" title="Cotton Candy"></div>
+                <div class="palette-option" data-palette="7" style="background: linear-gradient(135deg, #30336b 0%, #130f40 100%);" title="Midnight Dark"></div>
+            </div>
+            <p class="palette-note">Selected: <span id="selectedPaletteName">Classic Purple</span></p>
+        </div>
+        
+        <textarea id="setupStudentNames" class="setup-textarea" placeholder="Emma, Liam, Olivia, Noah, Ava, Elijah, Sophia, Lucas, Isabella, Mason, Mia, Ethan, Charlotte, Alexander, Amelia, Michael, Harper, Benjamin, Evelyn, Jacob, Abigail..."></textarea>
+        
+        <button onclick="generateBoard()" class="generate-btn">Generate Choice Board</button>
+        
+        <div id="urlResult" class="url-result hidden">
+            <h3>Your Personal Lunch Board URL:</h3>
+            <div id="urlDisplay" class="url-display"></div>
+            <div class="url-buttons">
+                <button onclick="copyUrl()" class="copy-btn">Copy URL</button>
+                <button onclick="loadBoard()" class="load-btn">Load Board Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Board -->
+    <div id="mainBoard" class="hidden">
+        <div class="controls">
+            <div class="control-group">
+                <label>School Lunch 1:</label>
+                <input type="text" id="lunch1" placeholder="e.g., Pizza & Fruit">
+            </div>
+            <div class="control-group">
+                <label>School Lunch 2:</label>
+                <input type="text" id="lunch2" placeholder="e.g., Chicken & Veggies">
+            </div>
+            <div class="control-group">
+                <button onclick="resetBoard()">Reset Board</button>
+                <button onclick="backToSetup()">New Student List</button>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <div class="students-section">
+                <div class="section-title">Students</div>
+                <div class="students-grid" id="studentsGrid"></div>
+            </div>
+
+            <div class="choices-section">
+                <div class="choice-column" data-choice="lunch1">
+                    <div class="choice-title">
+                        <input type="text" id="lunch1Title" placeholder="School Lunch 1" readonly>
+                    </div>
+                    <div class="choice-students" id="lunch1Students"></div>
+                    <div class="choice-count" id="lunch1Count">Count: 0</div>
+                </div>
+
+                <div class="choice-column" data-choice="lunch2">
+                    <div class="choice-title">
+                        <input type="text" id="lunch2Title" placeholder="School Lunch 2" readonly>
+                    </div>
+                    <div class="choice-students" id="lunch2Students"></div>
+                    <div class="choice-count" id="lunch2Count">Count: 0</div>
+                </div>
+
+                <div class="choice-column" data-choice="home">
+                    <div class="choice-title">🏠 Home Lunch</div>
+                    <div class="choice-students" id="homeStudents"></div>
+                    <div class="choice-count" id="homeCount">Count: 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+        let choices = {
+            lunch1: [],
+            lunch2: [],
+            home: []
+        };
+        let generatedUrl = '';
+        let selectedPalette = 0;
+        
+        const paletteNames = [
+            "Classic Purple",
+            "Berry Blast", 
+            "Ocean Blue",
+            "Fresh Green",
+            "Sunset Glow",
+            "Soft Pastels",
+            "Cotton Candy",
+            "Midnight Dark"
+        ];
+
+        // Check if we have students in URL parameters on load
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentsParam = urlParams.get('students');
+            const paletteParam = urlParams.get('palette');
+            
+            // Set palette
+            if (paletteParam !== null) {
+                selectedPalette = parseInt(paletteParam) || 0;
+            }
+            applyPalette(selectedPalette);
+            
+            if (studentsParam) {
+                // We have students in URL, load the board
+                students = studentsParam.split(',').map(name => decodeURIComponent(name.trim())).filter(name => name);
+                showMainBoard();
+                updateDisplay();
+            } else {
+                // Show setup page
+                showSetupPage();
+                initializePaletteSelector();
+            }
+        };
+
+        function initializePaletteSelector() {
+            const paletteOptions = document.querySelectorAll('.palette-option');
+            
+            // Set initial selection
+            paletteOptions[selectedPalette].classList.add('selected');
+            document.getElementById('selectedPaletteName').textContent = paletteNames[selectedPalette];
+            
+            // Add click handlers
+            paletteOptions.forEach((option, index) => {
+                option.addEventListener('click', function() {
+                    // Remove previous selection
+                    paletteOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Set new selection
+                    this.classList.add('selected');
+                    selectedPalette = index;
+                    document.getElementById('selectedPaletteName').textContent = paletteNames[index];
+                    
+                    // Apply palette immediately
+                    applyPalette(selectedPalette);
+                });
+            });
+        }
+
+        function applyPalette(paletteIndex) {
+            // Remove all palette classes
+            for (let i = 0; i <= 7; i++) {
+                document.body.classList.remove(`palette-${i}`);
+            }
+            // Apply selected palette
+            document.body.classList.add(`palette-${paletteIndex}`);
+        }
+
+        function showSetupPage() {
+            document.getElementById('setupPage').classList.remove('hidden');
+            document.getElementById('mainBoard').classList.add('hidden');
+            initializePaletteSelector();
+        }
+
+        function showMainBoard() {
+            document.getElementById('setupPage').classList.add('hidden');
+            document.getElementById('mainBoard').classList.remove('hidden');
+        }
+
+        function generateBoard() {
+            const namesInput = document.getElementById('setupStudentNames').value;
+            if (!namesInput.trim()) {
+                alert('Please enter student names first!');
+                return;
+            }
+
+            students = namesInput.split(',').map(name => name.trim()).filter(name => name);
+            
+            // Create URL with students and palette parameters
+            const baseUrl = window.location.href.split('?')[0]; // Remove any existing parameters
+            const encodedStudents = students.map(name => encodeURIComponent(name)).join(',');
+            generatedUrl = `${baseUrl}?students=${encodedStudents}&palette=${selectedPalette}`;
+            
+            // Show the URL result
+            document.getElementById('urlDisplay').textContent = generatedUrl;
+            document.getElementById('urlResult').classList.remove('hidden');
+        }
+
+        function copyUrl() {
+            navigator.clipboard.writeText(generatedUrl).then(function() {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#4facfe';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#ff6b6b';
+                }, 2000);
+            }).catch(function() {
+                // Fallback for browsers that don't support clipboard API
+                const textArea = document.createElement('textarea');
+                textArea.value = generatedUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#4facfe';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#ff6b6b';
+                }, 2000);
+            });
+        }
+
+        function loadBoard() {
+            // Reset choices and show main board
+            choices = { lunch1: [], lunch2: [], home: [] };
+            showMainBoard();
+            updateDisplay();
+        }
+
+        function backToSetup() {
+            if (confirm('Are you sure you want to create a new student list? This will clear the current board.')) {
+                // Clear URL parameters and show setup
+                history.pushState({}, '', window.location.href.split('?')[0]);
+                students = [];
+                choices = { lunch1: [], lunch2: [], home: [] };
+                document.getElementById('setupStudentNames').value = '';
+                document.getElementById('urlResult').classList.add('hidden');
+                showSetupPage();
+            }
+        }
+
+        // Auto-save lunch titles when changed
+        document.getElementById('lunch1').addEventListener('input', function() {
+            document.getElementById('lunch1Title').value = this.value;
+        });
+
+        document.getElementById('lunch2').addEventListener('input', function() {
+            document.getElementById('lunch2Title').value = this.value;
+        });
+
+        function updateDisplay() {
+            updateStudentsGrid();
+            updateChoiceColumns();
+            updateCounts();
+            
+            // Update lunch titles
+            document.getElementById('lunch1Title').value = document.getElementById('lunch1').value;
+            document.getElementById('lunch2Title').value = document.getElementById('lunch2').value;
+        }
+
+        function updateStudentsGrid() {
+            const grid = document.getElementById('studentsGrid');
+            grid.innerHTML = '';
+
+            // Show students who haven't made a choice yet
+            const assignedStudents = [...choices.lunch1, ...choices.lunch2, ...choices.home];
+            const unassignedStudents = students.filter(student => !assignedStudents.includes(student));
+
+            unassignedStudents.forEach(student => {
+                const puck = createStudentPuck(student);
+                grid.appendChild(puck);
+            });
+        }
+
+        function createStudentPuck(studentName) {
+            const puck = document.createElement('div');
+            puck.className = 'student-puck';
+            puck.textContent = studentName;
+            puck.draggable = true;
+            
+            puck.addEventListener('dragstart', handleDragStart);
+            puck.addEventListener('dragend', handleDragEnd);
+            
+            return puck;
+        }
+
+        function createStudentInChoice(studentName) {
+            const student = document.createElement('div');
+            student.className = 'student-in-choice';
+            student.textContent = studentName;
+            student.draggable = true;
+            
+            student.addEventListener('dragstart', handleDragStart);
+            student.addEventListener('dragend', handleDragEnd);
+            
+            return student;
+        }
+
+        function updateChoiceColumns() {
+            ['lunch1', 'lunch2', 'home'].forEach(choiceType => {
+                const container = document.getElementById(choiceType + 'Students');
+                container.innerHTML = '';
+                
+                choices[choiceType].forEach(student => {
+                    const studentElement = createStudentInChoice(student);
+                    container.appendChild(studentElement);
+                });
+            });
+        }
+
+        function updateCounts() {
+            ['lunch1', 'lunch2', 'home'].forEach(choiceType => {
+                const count = choices[choiceType].length;
+                document.getElementById(choiceType + 'Count').textContent = `Count: ${count}`;
+            });
+        }
+
+        let draggedStudent = null;
+
+        function handleDragStart(e) {
+            draggedStudent = e.target.textContent;
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // Set up drop zones
+        document.querySelectorAll('.choice-column').forEach(column => {
+            column.addEventListener('dragover', handleDragOver);
+            column.addEventListener('drop', handleDrop);
+            column.addEventListener('dragenter', handleDragEnter);
+            column.addEventListener('dragleave', handleDragLeave);
+        });
+
+        // Also make students grid a drop zone (for returning students)
+        const studentsGrid = document.getElementById('studentsGrid');
+        studentsGrid.addEventListener('dragover', handleDragOver);
+        studentsGrid.addEventListener('drop', handleDropToStudents);
+        studentsGrid.addEventListener('dragenter', handleDragEnter);
+        studentsGrid.addEventListener('dragleave', handleDragLeave);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                e.currentTarget.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            
+            if (!draggedStudent) return;
+
+            const choiceType = e.currentTarget.dataset.choice;
+            
+            // Remove student from all choices first
+            Object.keys(choices).forEach(key => {
+                choices[key] = choices[key].filter(student => student !== draggedStudent);
+            });
+            
+            // Add to new choice
+            choices[choiceType].push(draggedStudent);
+            
+            updateDisplay();
+        }
+
+        function handleDropToStudents(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            
+            if (!draggedStudent) return;
+
+            // Remove student from all choices
+            Object.keys(choices).forEach(key => {
+                choices[key] = choices[key].filter(student => student !== draggedStudent);
+            });
+            
+            updateDisplay();
+        }
+
+        function resetBoard() {
+            if (confirm('Are you sure you want to reset the board? This will move all students back to the unassigned area.')) {
+                choices = { lunch1: [], lunch2: [], home: [] };
+                updateDisplay();
+            }
+        }
+
+        // Add touch support for mobile devices
+        let touchTarget = null;
+
+        document.addEventListener('touchstart', function(e) {
+            const target = e.target;
+            if (target.classList.contains('student-puck') || target.classList.contains('student-in-choice')) {
+                touchTarget = target;
+                draggedStudent = target.textContent;
+                target.classList.add('dragging');
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('touchmove', function(e) {
+            if (touchTarget) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                // Visual feedback
+                document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                const dropZone = element?.closest('.choice-column, .students-section');
+                if (dropZone) {
+                    dropZone.classList.add('drag-over');
+                }
+            }
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (touchTarget && draggedStudent) {
+                const touch = e.changedTouches[0];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                const dropZone = element?.closest('.choice-column');
+                const studentsSection = element?.closest('.students-section');
+                
+                if (dropZone) {
+                    const choiceType = dropZone.dataset.choice;
+                    // Remove from all choices
+                    Object.keys(choices).forEach(key => {
+                        choices[key] = choices[key].filter(student => student !== draggedStudent);
+                    });
+                    // Add to new choice
+                    choices[choiceType].push(draggedStudent);
+                } else if (studentsSection) {
+                    // Remove from all choices (return to students)
+                    Object.keys(choices).forEach(key => {
+                        choices[key] = choices[key].filter(student => student !== draggedStudent);
+                    });
+                }
+                
+                touchTarget.classList.remove('dragging');
+                document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                updateDisplay();
+            }
+            
+            touchTarget = null;
+            draggedStudent = null;
+        });
+    </script>
+</body>
+</html>
