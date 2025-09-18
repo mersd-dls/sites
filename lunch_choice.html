@@ -359,6 +359,22 @@
             padding: 10px;
         }
 
+        /* NEW: Styles for when the choice column is "packed" with students */
+        .choice-column.packed .choice-students {
+            flex-direction: row; /* Change to horizontal layout */
+            flex-wrap: wrap; /* Allow items to wrap to the next line */
+            justify-content: center; /* Center the items */
+            gap: 10px; /* Add some spacing */
+        }
+        
+        .choice-column.packed .student-in-choice {
+            width: calc(50% - 15px); /* Half width with a small gap */
+            max-width: 160px; /* Max width to prevent them from getting too big on large screens */
+            /* BEGIN: Added for font size adjustment */
+            font-size: 10px;
+            /* END: Added for font size adjustment */
+        }
+
         .choice-count {
             background: #ff6b6b;
             color: white;
@@ -380,7 +396,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             cursor: move;
             transition: all 0.3s ease;
-            width: 100%;
+            width: 100%; /* Default to full width */
             text-align: center;
         }
 
@@ -400,6 +416,10 @@
             
             .choices-section {
                 flex-direction: column;
+            }
+
+            .choice-column.packed .student-in-choice {
+                width: calc(50% - 15px); /* Half width on mobile too */
             }
         }
     </style>
@@ -501,6 +521,7 @@
         };
         let generatedUrl = '';
         let selectedPalette = 0;
+        const studentsPerColumn = 7; // The limit for full-width pucks
         
         const paletteNames = [
             "Classic Purple",
@@ -584,7 +605,11 @@
         function generateBoard() {
             const namesInput = document.getElementById('setupStudentNames').value;
             if (!namesInput.trim()) {
-                alert('Please enter student names first!');
+                const messageBox = document.createElement('div');
+                messageBox.textContent = 'Please enter student names first!';
+                messageBox.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff6b6b; color: white; padding: 20px; border-radius: 10px; z-index: 9999; box-shadow: 0 4px 8px rgba(0,0,0,0.2);';
+                document.body.appendChild(messageBox);
+                setTimeout(() => messageBox.remove(), 2000);
                 return;
             }
 
@@ -638,15 +663,34 @@
         }
 
         function backToSetup() {
-            if (confirm('Are you sure you want to create a new student list? This will clear the current board.')) {
-                // Clear URL parameters and show setup
+            const messageBox = document.createElement('div');
+            messageBox.textContent = 'Are you sure you want to create a new student list? This will clear the current board.';
+            messageBox.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff6b6b; color: white; padding: 20px; border-radius: 10px; z-index: 9999; box-shadow: 0 4px 8px rgba(0,0,0,0.2);';
+            
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = 'Confirm';
+            confirmBtn.style.cssText = 'background: #43e97b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;';
+            confirmBtn.onclick = () => {
                 history.pushState({}, '', window.location.href.split('?')[0]);
                 students = [];
                 choices = { lunch1: [], lunch2: [], home: [] };
                 document.getElementById('setupStudentNames').value = '';
                 document.getElementById('urlResult').classList.add('hidden');
                 showSetupPage();
-            }
+                messageBox.remove();
+            };
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.cssText = 'background: #d3d3d3; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px; margin-top: 10px;';
+            cancelBtn.onclick = () => {
+                messageBox.remove();
+            };
+
+            messageBox.appendChild(document.createElement('br'));
+            messageBox.appendChild(confirmBtn);
+            messageBox.appendChild(cancelBtn);
+            document.body.appendChild(messageBox);
         }
 
         // Auto-save lunch titles when changed
@@ -709,7 +753,15 @@
         function updateChoiceColumns() {
             ['lunch1', 'lunch2', 'home'].forEach(choiceType => {
                 const container = document.getElementById(choiceType + 'Students');
+                const column = container.closest('.choice-column');
                 container.innerHTML = '';
+                
+                // Add or remove the 'packed' class based on the number of students
+                if (choices[choiceType].length > studentsPerColumn) {
+                    column.classList.add('packed');
+                } else {
+                    column.classList.remove('packed');
+                }
                 
                 choices[choiceType].forEach(student => {
                     const studentElement = createStudentInChoice(student);
@@ -799,10 +851,30 @@
         }
 
         function resetBoard() {
-            if (confirm('Are you sure you want to reset the board? This will move all students back to the unassigned area.')) {
+            const messageBox = document.createElement('div');
+            messageBox.textContent = 'Are you sure you want to reset the board? This will move all students back to the unassigned area.';
+            messageBox.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff6b6b; color: white; padding: 20px; border-radius: 10px; z-index: 9999; box-shadow: 0 4px 8px rgba(0,0,0,0.2);';
+            
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = 'Confirm';
+            confirmBtn.style.cssText = 'background: #43e97b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;';
+            confirmBtn.onclick = () => {
                 choices = { lunch1: [], lunch2: [], home: [] };
                 updateDisplay();
-            }
+                messageBox.remove();
+            };
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.cssText = 'background: #d3d3d3; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px; margin-top: 10px;';
+            cancelBtn.onclick = () => {
+                messageBox.remove();
+            };
+
+            messageBox.appendChild(document.createElement('br'));
+            messageBox.appendChild(confirmBtn);
+            messageBox.appendChild(cancelBtn);
+            document.body.appendChild(messageBox);
         }
 
         // Add touch support for mobile devices
