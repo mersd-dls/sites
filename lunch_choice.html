@@ -370,9 +370,7 @@
         .choice-column.packed .student-in-choice {
             width: calc(50% - 15px); /* Half width with a small gap */
             max-width: 160px; /* Max width to prevent them from getting too big on large screens */
-            /* BEGIN: Added for font size adjustment */
             font-size: 10px;
-            /* END: Added for font size adjustment */
         }
 
         .choice-count {
@@ -398,6 +396,7 @@
             transition: all 0.3s ease;
             width: 100%; /* Default to full width */
             text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2); /* Added for better visibility */
         }
 
         .student-in-choice:hover {
@@ -475,6 +474,10 @@
                 <input type="text" id="lunch2" placeholder="e.g., Chicken & Veggies">
             </div>
             <div class="control-group">
+                <label>School Lunch 3:</label>
+                <input type="text" id="lunch3" placeholder="e.g., Salad & Soup">
+            </div>
+            <div class="control-group">
                 <button onclick="resetBoard()">Reset Board</button>
                 <button onclick="backToSetup()">New Student List</button>
             </div>
@@ -503,6 +506,14 @@
                     <div class="choice-count" id="lunch2Count">Count: 0</div>
                 </div>
 
+                <div class="choice-column" data-choice="lunch3">
+                    <div class="choice-title">
+                        <input type="text" id="lunch3Title" placeholder="School Lunch 3" readonly>
+                    </div>
+                    <div class="choice-students" id="lunch3Students"></div>
+                    <div class="choice-count" id="lunch3Count">Count: 0</div>
+                </div>
+
                 <div class="choice-column" data-choice="home">
                     <div class="choice-title">🏠 Home Lunch</div>
                     <div class="choice-students" id="homeStudents"></div>
@@ -517,6 +528,7 @@
         let choices = {
             lunch1: [],
             lunch2: [],
+            lunch3: [],
             home: []
         };
         let generatedUrl = '';
@@ -657,7 +669,7 @@
 
         function loadBoard() {
             // Reset choices and show main board
-            choices = { lunch1: [], lunch2: [], home: [] };
+            choices = { lunch1: [], lunch2: [], lunch3: [], home: [] };
             showMainBoard();
             updateDisplay();
         }
@@ -673,7 +685,7 @@
             confirmBtn.onclick = () => {
                 history.pushState({}, '', window.location.href.split('?')[0]);
                 students = [];
-                choices = { lunch1: [], lunch2: [], home: [] };
+                choices = { lunch1: [], lunch2: [], lunch3: [], home: [] };
                 document.getElementById('setupStudentNames').value = '';
                 document.getElementById('urlResult').classList.add('hidden');
                 showSetupPage();
@@ -702,6 +714,10 @@
             document.getElementById('lunch2Title').value = this.value;
         });
 
+        document.getElementById('lunch3').addEventListener('input', function() {
+            document.getElementById('lunch3Title').value = this.value;
+        });
+
         function updateDisplay() {
             updateStudentsGrid();
             updateChoiceColumns();
@@ -710,6 +726,7 @@
             // Update lunch titles
             document.getElementById('lunch1Title').value = document.getElementById('lunch1').value;
             document.getElementById('lunch2Title').value = document.getElementById('lunch2').value;
+            document.getElementById('lunch3Title').value = document.getElementById('lunch3').value;
         }
 
         function updateStudentsGrid() {
@@ -717,7 +734,7 @@
             grid.innerHTML = '';
 
             // Show students who haven't made a choice yet
-            const assignedStudents = [...choices.lunch1, ...choices.lunch2, ...choices.home];
+            const assignedStudents = [...choices.lunch1, ...choices.lunch2, ...choices.lunch3, ...choices.home];
             const unassignedStudents = students.filter(student => !assignedStudents.includes(student));
 
             unassignedStudents.forEach(student => {
@@ -751,7 +768,7 @@
         }
 
         function updateChoiceColumns() {
-            ['lunch1', 'lunch2', 'home'].forEach(choiceType => {
+            ['lunch1', 'lunch2', 'lunch3', 'home'].forEach(choiceType => {
                 const container = document.getElementById(choiceType + 'Students');
                 const column = container.closest('.choice-column');
                 container.innerHTML = '';
@@ -771,7 +788,7 @@
         }
 
         function updateCounts() {
-            ['lunch1', 'lunch2', 'home'].forEach(choiceType => {
+            ['lunch1', 'lunch2', 'lunch3', 'home'].forEach(choiceType => {
                 const count = choices[choiceType].length;
                 document.getElementById(choiceType + 'Count').textContent = `Count: ${count}`;
             });
@@ -859,7 +876,7 @@
             confirmBtn.textContent = 'Confirm';
             confirmBtn.style.cssText = 'background: #43e97b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;';
             confirmBtn.onclick = () => {
-                choices = { lunch1: [], lunch2: [], home: [] };
+                choices = { lunch1: [], lunch2: [], lunch3: [], home: [] };
                 updateDisplay();
                 messageBox.remove();
             };
