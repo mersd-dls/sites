@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Literacy Assessment Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9fafb; margin: 0; padding: 20px; }
+    h1 { display: flex; align-items: center; gap: 10px; }
+    .card { background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .filters { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 10px; margin-bottom: 20px; }
+    select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 10px; margin-bottom: 20px; }
+    .stat-box { padding: 12px; border-radius: 8px; }
+    .students { overflow-x: auto; max-height: 560px;}
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 8px 12px; border-bottom: 1px solid #eee; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; position: sticky; top: 0; z-index: 2;}
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 16px; font-weight: bold;}
+    .above { background: #d1fae5; color: #065f46; }
+    .on { background: #fef3c7; color: #92400e; }
+    .below { background: #fee2e2; color: #991b1b; }
+    .na { background: #e5e7eb; color: #c4c7cb; }
+    small { color: #374151; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>📊 Literacy Assessment Dashboard</h1>
+
+    <!-- Upload -->
+    <input type="file" id="csvFile" accept=".csv">
+
+    <!-- Filters -->
+    <div class="filters" id="filters" style="display:none;">
+      <select id="schoolFilter"></select>
+      <select id="gradeFilter"></select>
+      <select id="classFilter"></select>
+      <select id="taskFilter"></select>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats" id="stats" style="display:none;"></div>
+
+    <!-- Charts --> 
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+      <canvas id="resultChart"></canvas>
+      <canvas id="percentileChart"></canvas>
+    </div>
+    
+    <!-- Table -->
+   <button id="printTableBtn">Print Table</button>
+
+    <script>
+document.getElementById('printTableBtn').addEventListener('click', () => {
+  const tableHtml = document.getElementById('studentsTable').outerHTML;
+  const printWindow = window.open('', '', 'height=800,width=1200');
+  printWindow.document.write('<html><head><title>Print Table</title>');
+  printWindow.document.write('<style>');
+  printWindow.document.write('table { border-collapse: collapse; width: 100%; }');
+  printWindow.document.write('th, td { padding: 8px 12px; border: 1px solid #000; text-align: left; }');
+  printWindow.document.write('th { background: #f3f4f6; }');
+  printWindow.document.write('.badge { display:inline-block; padding:4px 8px; border-radius:4px; font-weight:bold; }');
+  printWindow.document.write('.above { background: #d1fae5; color: #065f46; }');
+  printWindow.document.write('.on { background: #fef3c7; color: #92400e; }');
+  printWindow.document.write('.below { background: #fee2e2; color: #991b1b; }');
+  printWindow.document.write('.na { background: #e5e7eb; color: #c4c7cb; }');
+  printWindow.document.write('small { font-size: 12px; }');
+  printWindow.document.write('</style>');
+  printWindow.document.write('</head><body>');
+  printWindow.document.write(tableHtml);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
+});
+</script>
+  
+
+    <div class="students">
+      <table id="studentsTable"></table>
+    </div>
+  </div>
+
+<script>
+let rawData = [];
+let processedData = [];
+let filteredData = [];
+let taskTypes = [];
+let resultChart, percentileChart;
+
+function processData(data) {
+  const map = {};
+  data.forEach(row => {
+    const id = row['Student ID'];
+    if (!id) return;
+    if (!map[id]) {
+      map[id] = {
+        studentId: id,
+        firstName: row['First Name'] || '',
+        lastName: row['Last Name'] || '',
+        fullName: (row['First Name']||'') + ' ' + (row['Last Name']||''),
+        grade: row['Student Grade'],
+        school: row['School'],
+        class: (row['Class(es)']||'').split(';')[0].trim(),
+        tasks: {},
+        results: [],
+        percentiles: []
+      };
+    }
+    if (row['Task Type'] && row['Result']) {
+      const taskType = row['Task Type'];
+      map[id].tasks[taskType] = {
+        result: row['Result'],
+        percentile: row['Percentile'] !== 'N/A' ? row['Percentile'] : null,
+        // special rule: WCPM for Passage Reading Fluency, Score for everything else
+        numeric: (taskType === 'Passage Reading Fluency')
+          ? (row['Mean WCPM'] && row['Mean WCPM'] !== 'N/A' ? row['Mean WCPM'] : null)
+          : (row['Score'] && row['Score'] !== 'N/A' ? row['Score'] : null)
+      };
+      map[id].results.push(row['Result']);
+      if (row['Percentile'] && row['Percentile'] !== 'N/A') {
+        map[id].percentiles.push(row['Percentile']);
+      }
+    }
+  });
+  return Object.values(map);
+}
+
+function updateFilters(data) {
+  const schools = [...new Set(data.map(r => r.School).filter(Boolean))];
+  const grades = [...new Set(data.map(r => r['Student Grade']).filter(Boolean))];
+  const classes = [...new Set(data.map(r => r['Class(es)']).filter(Boolean).map(c => c.split(';')[0].trim()))];
+  const tasks = [...new Set(data.map(r => r['Task Type']).filter(Boolean))];
+
+  populateSelect('schoolFilter', schools, 'All Schools');
+  populateSelect('gradeFilter', grades, 'All Grades', true);
+  populateSelect('classFilter', classes, 'All Classes');
+  populateSelect('taskFilter', tasks, 'All Task Types');
+}
+
+function populateSelect(id, items, allLabel, isGrade=false) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = `<option value="">${allLabel}</option>` + items.sort().map(i => `<option value="${i}">${isGrade?'Grade ':''}${i}</option>`).join('');
+  sel.onchange = applyFilters;
+}
+
+function applyFilters() {
+  const school = document.getElementById('schoolFilter').value;
+  const grade = document.getElementById('gradeFilter').value;
+  const cls = document.getElementById('classFilter').value;
+  const task = document.getElementById('taskFilter').value;
+
+  filteredData = processedData.filter(s => 
+    (!school || s.school === school) &&
+    (!grade || s.grade == grade) &&
+    (!cls || s.class.includes(cls)) &&
+    (!task || Object.keys(s.tasks).includes(task))
+  );
+  renderDashboard();
+}
+
+function getTaskTypes() {
+  const set = new Set();
+  filteredData.forEach(s => Object.keys(s.tasks).forEach(t => set.add(t)));
+  return Array.from(set).sort();
+}
+
+function getResultDistribution() {
+  const counts = {Above:0, On:0, Below:0};
+  let total = 0;
+  filteredData.forEach(s => s.results.forEach(r => { if(counts[r]!==undefined){counts[r]++; total++;}}));
+  return Object.entries(counts).map(([r,c])=>({result:r,count:c,percentage:total?Math.round(c/total*100):0}));
+}
+
+function getPercentileDistribution() {
+  const ranges = {'0-25th':0,'26-50th':0,'51-75th':0,'76-99th':0};
+  filteredData.forEach(s=>s.percentiles.forEach(p=>{
+    if(/0-10th|11-24th/.test(p)) ranges['0-25th']++;
+    else if(/25-49th/.test(p)) ranges['26-50th']++;
+    else if(/50-75th/.test(p)) ranges['51-75th']++;
+    else if(/76-99th/.test(p)) ranges['76-99th']++;
+  }));
+  return Object.entries(ranges).map(([range,count])=>({range,count}));
+}
+
+function renderDashboard() {
+  document.getElementById('filters').style.display = 'grid';
+  document.getElementById('stats').style.display = 'grid';
+
+   // sort before rendering
+  filteredData.sort((a, b) => 
+    (a.lastName || '').localeCompare(b.lastName || '', undefined, { sensitivity: 'base' })
+  );
+
+  taskTypes = getTaskTypes();
+  const resultDist = getResultDistribution();
+  const percentileDist = getPercentileDistribution();
+
+  // Stats
+  const stats = document.getElementById('stats');
+  stats.innerHTML = `
+    <div class="stat-box" style="background:#dbeafe"><b>Total Students</b><br>${filteredData.length}</div>
+    <div class="stat-box" style="background:#d1fae5"><b>Above Level</b><br>${resultDist.find(r=>r.result==='Above').percentage}%</div>
+    <div class="stat-box" style="background:#fef3c7"><b>On Level</b><br>${resultDist.find(r=>r.result==='On').percentage}%</div>
+    <div class="stat-box" style="background:#fee2e2"><b>Below Level</b><br>${resultDist.find(r=>r.result==='Below').percentage}%</div>
+  `;
+
+  // Charts - Uncomment for bar chart.
+  if (resultChart) resultChart.destroy();
+  resultChart = new Chart(document.getElementById('resultChart'), {
+    type: 'bar',
+    data: {
+      labels: resultDist.map(r=>r.result),
+      datasets: [{label:'Count', data:resultDist.map(r=>r.count), backgroundColor:['#10b981','#f59e0b','#ef4444']}]
+    }
+  });
+
+  // Table
+  const table = document.getElementById('studentsTable');
+  table.innerHTML = `
+    <thead><tr><th>Student</th><th>Grade</th><th>Class</th>${taskTypes.map(t=>`<th>${t}</th>`).join('')}</tr></thead>
+    <tbody>
+      ${filteredData.map(s=>`
+        <tr>
+          <td>${s.fullName||'Student '+s.studentId}</td>
+          <td>${s.grade}</td>
+          <td>${s.class}</td>
+          ${taskTypes.map(t=>{
+            const task = s.tasks[t];
+            if(!task) return `<td><span class="badge na">N/A</span></td>`;
+            const cls = task.result==='Above'?'above':task.result==='On'?'on':task.result==='Below'?'below':'na';
+            return `<td>
+                      <span class="badge ${cls}">${task.result}</span>
+                      ${task.percentile?`<br><small>${task.percentile}</small>`:''}
+                      ${task.numeric!==null?`<br><small>${task.numeric}${t==='Passage Reading Fluency'?' WCPM':''}</small>`:''}
+                    </td>`;
+          }).join('')}
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
+}
+
+document.getElementById('csvFile').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if (!file) return;
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: results=>{
+      rawData = results.data.map(r=>{
+        const clean={}; for(const k in r){ clean[k.trim()] = (typeof r[k]==='string')?r[k].trim():r[k]; }
+        return clean;
+      });
+      processedData = processData(rawData);
+      filteredData = processedData;
+      updateFilters(rawData);
+      renderDashboard();
+    }
+  });
+});
+</script>
+</body>
+</html>
