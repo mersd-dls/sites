@@ -171,9 +171,34 @@ function getTaskTypes() {
 function getResultDistribution() {
   const counts = {Above:0, On:0, Below:0};
   let total = 0;
-  filteredData.forEach(s => s.results.forEach(r => { if(counts[r]!==undefined){counts[r]++; total++;}}));
-  return Object.entries(counts).map(([r,c])=>({result:r,count:c,percentage:total?Math.round(c/total*100):0}));
+  const selectedTask = document.getElementById('taskFilter').value;
+
+  filteredData.forEach(s => {
+    if (selectedTask) {
+      // Only count results for the chosen task
+      const task = s.tasks[selectedTask];
+      if (task && counts[task.result] !== undefined) {
+        counts[task.result]++;
+        total++;
+      }
+    } else {
+      // Count results across all tasks
+      s.results.forEach(r => {
+        if (counts[r] !== undefined) {
+          counts[r]++;
+          total++;
+        }
+      });
+    }
+  });
+
+  return Object.entries(counts).map(([r, c]) => ({
+    result: r,
+    count: c,
+    percentage: total ? Math.round(c / total * 100) : 0
+  }));
 }
+
 
 function getPercentileDistribution() {
   const ranges = {'0-25th':0,'26-50th':0,'51-75th':0,'76-99th':0};
@@ -195,7 +220,9 @@ function renderDashboard() {
     (a.lastName || '').localeCompare(b.lastName || '', undefined, { sensitivity: 'base' })
   );
 
-  taskTypes = getTaskTypes();
+  const selectedTask = document.getElementById('taskFilter').value;
+  taskTypes = selectedTask ? [selectedTask] : getTaskTypes();
+
   const resultDist = getResultDistribution();
   const percentileDist = getPercentileDistribution();
 
