@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator - MERSD</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #generateBtn {
+            background: #667eea;
+            color: white;
+        }
+
+        #generateBtn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #downloadBtn {
+            background: #10b981;
+            color: white;
+        }
+
+        #downloadBtn:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        #qrOutput {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: #f9fafb;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        #qrCanvas {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .qr-title {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info {
+            background: #e0e7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #4c51bf;
+            line-height: 1.6;
+        }
+
+        .info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 QR Code Generator</h1>
+        <p class="subtitle">Create QR codes for links, assignments, and more</p>
+
+        <div>
+            <label for="urlInput">URL or Text</label>
+            <input 
+                type="text" 
+                id="urlInput" 
+                placeholder="www.mersd.org..." 
+                value="">
+        </div>
+
+        <div>
+            <label for="titleInput">Title/Instructions (optional)</label>
+            <textarea 
+                id="titleInput" 
+                placeholder="Scan to access today's assignment"></textarea>
+        </div>
+
+        <div class="checkbox-container">
+            <input type="checkbox" id="brandedCheckbox">
+            <label for="brandedCheckbox">MERSD Branded?</label>
+        </div>
+
+        <button id="generateBtn">Generate QR Code</button>
+
+        <div id="qrOutput">
+            <canvas id="qrCanvas"></canvas>
+            <div class="qr-title" id="qrTitle"></div>
+        </div>
+
+        <button id="downloadBtn" style="display: none;">Download PNG</button>
+
+        <div class="info">
+            <strong>Setup Note:</strong>
+            Replace [INSERT IMAGE LINK HERE] in the code (around line 265) with your actual MERSD logo URL.<br><br>
+            <strong>Tips:</strong>
+            • Branded QR codes use MERSD green (#2B4736)<br>
+            • Logo appears in center with error correction<br>
+            • Test QR codes before printing to ensure they scan properly
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // ⚠️ REPLACE WITH YOUR MERSD LOGO URL
+        const LOGO_URL = 'images/HeaderLogo.png';
+        
+        const urlInput = document.getElementById('urlInput');
+        const titleInput = document.getElementById('titleInput');
+        const brandedCheckbox = document.getElementById('brandedCheckbox');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const qrOutput = document.getElementById('qrOutput');
+        const qrCanvas = document.getElementById('qrCanvas');
+        const qrTitle = document.getElementById('qrTitle');
+
+        let currentQRCode = null;
+
+        generateBtn.addEventListener('click', generateQRCode);
+
+        async function generateQRCode() {
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('Please enter a URL or text');
+                return;
+            }
+
+            const isBranded = brandedCheckbox.checked;
+            const title = titleInput.value.trim();
+            const color = isBranded ? '#2B4736' : '#000000';
+
+            // Clear previous QR code
+            qrCanvas.getContext('2d').clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+
+            // Generate base QR code
+            const tempDiv = document.createElement('div');
+            const qr = new QRCode(tempDiv, {
+                text: url,
+                width: 512,
+                height: 512,
+                colorDark: color,
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H // High error correction for logo
+            });
+
+            // Wait for QR code generation
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const qrImg = tempDiv.querySelector('img');
+            const ctx = qrCanvas.getContext('2d');
+            
+            qrCanvas.width = 512;
+            qrCanvas.height = 512;
+
+            // Draw QR code
+            ctx.drawImage(qrImg, 0, 0, 512, 512);
+
+            // Add logo if branded
+            if (isBranded && LOGO_URL !== '[INSERT IMAGE LINK HERE]') {
+                const logo = new Image();
+                logo.crossOrigin = 'anonymous';
+                logo.onload = function() {
+                    const logoSize = 100;
+                    const logoX = (512 - logoSize) / 2;
+                    const logoY = (512 - logoSize) / 2;
+                    
+                    // White background for logo
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(logoX - 10, logoY - 10, logoSize + 20, logoSize + 20);
+                    
+                    // Draw logo
+                    ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+                    
+                    // Border around logo
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(logoX - 10, logoY - 10, logoSize + 20, logoSize + 20);
+                };
+                logo.src = LOGO_URL;
+            }
+
+            // Display title if provided
+            qrTitle.textContent = title;
+            qrTitle.style.display = title ? 'block' : 'none';
+
+            // Show output
+            qrOutput.style.display = 'block';
+            downloadBtn.style.display = 'block';
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            const title = titleInput.value.trim();
+            const filename = title ? 
+                title.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '-qr.png' : 
+                'qr-code.png';
+
+            // Create a new canvas with title if provided
+            if (title) {
+                const exportCanvas = document.createElement('canvas');
+                const ctx = exportCanvas.getContext('2d');
+                
+                // Calculate dimensions
+                const padding = 40;
+                const titleHeight = 60;
+                exportCanvas.width = 512 + (padding * 2);
+                exportCanvas.height = 512 + (padding * 2) + titleHeight;
+                
+                // White background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+                
+                // Draw QR code
+                ctx.drawImage(qrCanvas, padding, padding, 512, 512);
+                
+                // Draw title
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(title, exportCanvas.width / 2, 512 + padding + 40);
+                
+                // Download
+                exportCanvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            } else {
+                // Download QR code only
+                qrCanvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
