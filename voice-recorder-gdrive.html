@@ -466,7 +466,7 @@
 
                 if (response.ok) {
                     const result = await response.json();
-                    alert('✓ Successfully saved to Google Drive!\nFile ID: ' + result.id);
+                    alert('✓ Successfully saved to Google Drive!\nFilename: ' + filename);
                     saveBtn.textContent = '✓ Saved!';
                     saveBtn.style.background = '#059669';
                 } else {
