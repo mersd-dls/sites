@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Text Reader with Image Overlay</title>
+    <!-- Tesseract.js for OCR -->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js'></script>
+    <style>
+        /* General Setup */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #434343 0%, #000000 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2.2em;
+        }
+
+        /* Upload Area */
+        #uploadArea {
+            border: 2px dashed #93c5fd;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            color: #3b82f6;
+            margin-bottom: 20px;
+        }
+        
+        #uploadArea:hover, #uploadArea.dragover {
+            background-color: #eff6ff;
+            border-color: #2563eb;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+
+        /* Status & Progress */
+        #status {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .processing { color: #f97316; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+
+        #progressBar {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        #progressBar.visible { display: block; }
+
+        #progressFill {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* --- Image and Overlay Container --- */
+        #imageContainer {
+            position: relative;
+            max-width: 100%;
+            margin: 0 auto 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+            line-height: 1;
+        }
+
+        /* Base Image */
+        #preview {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        
+        /* Text Overlay Layer */
+        #textOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            font-size: 1px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        #textOverlay.active {
+            pointer-events: auto;
+        }
+
+        /* Overlay Word Styles */
+        .overlay-word {
+            position: absolute;
+            line-height: 1.0;
+            font-weight: normal; 
+            white-space: nowrap; 
+            text-align: center;
+            background-color: transparent; 
+            color: #1f2937;
+            opacity: 0.15;
+            cursor: pointer;
+            transition: opacity 0.2s, background-color 0.2s;
+            border-radius: 2px;
+            z-index: 10;
+        }
+
+        .overlay-word.highlight {
+            background-color: #fde047;
+            opacity: 1.0;
+            font-weight: 700;
+        }
+
+        /* Controls */
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            display: none; 
+        }
+        
+        #controls.visible { display: flex; }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.1s, box-shadow 0.1s;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        .btn.active {
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        #readBtn { background-color: #34d399; color: white; }
+        #readBtn:hover { background-color: #10b981; box-shadow: 0 4px 10px rgba(52, 211, 153, 0.5); }
+        
+        #pauseBtn, #stopBtn { background-color: #fca5a5; color: #7f1d1d; }
+        #pauseBtn:hover, #stopBtn:hover { background-color: #f87171; box-shadow: 0 4px 10px rgba(252, 165, 165, 0.5); }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            #uploadArea {
+                padding: 30px 15px;
+            }
+            #controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Visual OCR & Read Aloud Tool</h1>
+        <p style="text-align: center; margin-bottom: 20px;">Upload an image to extract text and have it read aloud. Works best with clear images of text.</p>
+        
+        <div id="uploadArea">
+            <input type="file" id="fileInput" accept="image/*">
+            <p>Drag & Drop an Image or Click to Upload</p>
+            <p style="font-size: 0.8em; color: #9ca3af;">(Supported formats: JPG, PNG)</p>
+        </div>
+
+        <div id="imageContainer">
+            <img id="preview" alt="Image Preview">
+            <div id="textOverlay"></div>
+        </div>
+
+        <div id="status" class="idle">Waiting for Speech API to load...</div>
+
+        <div id="progressBar">
+            <div id="progressFill"></div>
+        </div>
+        
+        <div id="controls">
+            <button id="readBtn" class="btn">▶️ Read Aloud</button>
+            <button id="pauseBtn" class="btn" style="display:none;">⏸️ Pause</button>
+            <button id="stopBtn" class="btn">⏹️ Stop</button>
+        </div>
+
+        <div id="textOutput" style="display:none;"></div> 
+    </div>
+
+    <script>
+        // --- 1. UI Element References ---
+        const ui = {
+            fileInput: document.getElementById('fileInput'),
+            uploadArea: document.getElementById('uploadArea'),
+            imageContainer: document.getElementById('imageContainer'),
+            preview: document.getElementById('preview'),
+            textOverlay: document.getElementById('textOverlay'),
+            status: document.getElementById('status'),
+            controls: document.getElementById('controls'),
+            readBtn: document.getElementById('readBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            progressBar: document.getElementById('progressBar'),
+            progressFill: document.getElementById('progressFill'),
+        };
+
+        // --- 2. State Management & Initialization ---
+        let extractedText = '';
+        let wordData = [];
+        let isPaused = false;
+        let selectedVoice = null;
+        let originalImageDimensions = { width: 0, height: 0 };
+        let wordElementMap = new Map();
+
+        // Ensure voices are loaded
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    selectedVoice = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('en')) || window.speechSynthesis.getVoices()[0];
+                    if (extractedText.length === 0) {
+                        ui.status.textContent = 'Speech API ready. Waiting for image upload...';
+                        ui.status.className = 'idle';
+                    }
+                };
+            } else {
+                selectedVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+                if (extractedText.length === 0) {
+                    ui.status.textContent = 'Speech API ready. Waiting for image upload...';
+                    ui.status.className = 'idle';
+                }
+            }
+        }
+        loadVoices();
+
+        // --- 3. Core Utility Functions ---
+
+        function clearAllHighlights() {
+            wordData.forEach(data => {
+                if (data.element) {
+                    data.element.classList.remove('highlight');
+                }
+            });
+        }
+
+        function highlightWord(charIndex) {
+            clearAllHighlights();
+            const element = wordElementMap.get(charIndex);
+            if (element) {
+                element.classList.add('highlight');
+            }
+        }
+        
+        /**
+         * Parses HOCR with improved filtering for better text detection
+         * @param {string} hocrHtml - The HOCR HTML output from Tesseract
+         * @param {number} confidenceThreshold - Minimum confidence score (0-100)
+         */
+        function parseHOCR(hocrHtml, confidenceThreshold = 70) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(hocrHtml, 'text/html');
+            
+            const words = [];
+            const textNodes = doc.querySelectorAll('.ocrx_word');
+            
+            let runningCharIndex = 0;
+            let fullText = '';
+            
+            textNodes.forEach(wordNode => {
+                const text = wordNode.textContent.trim();
+                const title = wordNode.getAttribute('title');
+                
+                // Extract confidence and bbox
+                const bboxMatch = title ? title.match(/bbox (\d+) (\d+) (\d+) (\d+)/) : null;
+                const confMatch = title ? title.match(/x_wconf (\d+)/) : null;
+                
+                if (bboxMatch && confMatch) {
+                    const confidence = parseInt(confMatch[1], 10);
+                    const [x1, y1, x2, y2] = bboxMatch.slice(1).map(Number);
+                    
+                    // IMPROVED FILTERING:
+                    // 1. Check confidence threshold
+                    // 2. Ensure text has content
+                    // 3. Must contain at least one alphanumeric character
+                    // 4. Filter out very small words that are likely noise (unless they're valid like "I" or "a")
+                    const hasAlphanumeric = /[a-zA-Z0-9]/.test(text);
+                    const isValidLength = text.length > 1 || /^[aAiI]$/.test(text);
+                    
+                    if (confidence >= confidenceThreshold && 
+                        text.length > 0 && 
+                        hasAlphanumeric &&
+                        isValidLength) {
+                        
+                        if (fullText.length > 0) {
+                            fullText += ' ';
+                            runningCharIndex++;
+                        }
+
+                        words.push({
+                            text: text,
+                            bbox: [x1, y1, x2, y2],
+                            charIndex: runningCharIndex,
+                            confidence: confidence,
+                            element: null,
+                        });
+                        
+                        fullText += text;
+                        runningCharIndex += text.length;
+                    }
+                }
+            });
+            
+            extractedText = fullText.trim(); 
+            wordData = words;
+            
+            return fullText;
+        }
+
+        function displayOverlayText() {
+            ui.textOverlay.innerHTML = '';
+            wordElementMap.clear();
+
+            if (wordData.length === 0) return;
+
+            const previewWidth = ui.preview.offsetWidth;
+            const originalWidth = originalImageDimensions.width;
+            const scale = previewWidth / originalWidth;
+
+            wordData.forEach(data => {
+                const [x1, y1, x2, y2] = data.bbox;
+                
+                const left = x1 * scale;
+                const top = y1 * scale;
+                const width = (x2 - x1) * scale;
+                const height = (y2 - y1) * scale;
+                
+                const fontSize = Math.max(8, height - 2); 
+
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'overlay-word';
+                wordSpan.textContent = data.text;
+                
+                wordSpan.style.left = `${left}px`;
+                wordSpan.style.top = `${top}px`;
+                wordSpan.style.width = `${width}px`;
+                wordSpan.style.height = `${height}px`;
+                wordSpan.style.fontSize = `${fontSize}px`;
+                
+                wordSpan.dataset.charIndex = data.charIndex;
+                wordSpan.addEventListener('click', handleWordClick); 
+
+                ui.textOverlay.appendChild(wordSpan);
+                data.element = wordSpan;
+                wordElementMap.set(data.charIndex, wordSpan);
+            });
+            
+            ui.textOverlay.classList.add('active');
+        }
+
+        // --- 4. TTS Control Functions ---
+
+        function stopSpeech() {
+            window.speechSynthesis.cancel();
+            clearAllHighlights();
+            isPaused = false;
+            ui.readBtn.style.display = 'inline-block';
+            ui.pauseBtn.style.display = 'none';
+            ui.pauseBtn.classList.remove('active'); 
+            ui.pauseBtn.textContent = '⏸️ Pause'; 
+        }
+
+        function startSpeech(text, startCharIndex, isSingleWord) {
+            window.speechSynthesis.cancel(); 
+
+            if (!selectedVoice) {
+                ui.status.textContent = 'Error: No speech voices available.';
+                ui.status.className = 'error';
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.voice = selectedVoice;
+            
+            let hasStarted = false; 
+            
+            utterance.onstart = () => {
+                hasStarted = true; 
+                if (!isSingleWord) {
+                    ui.readBtn.style.display = 'none';
+                    ui.pauseBtn.style.display = 'inline-block';
+                    ui.pauseBtn.classList.add('active'); 
+                    ui.pauseBtn.textContent = '⏸️ Pause';
+                    isPaused = false;
+                }
+                ui.status.textContent = 'Speaking...';
+                ui.status.className = 'processing';
+            };
+
+            utterance.onboundary = (event) => {
+                if (event.name === 'word') {
+                    const absoluteCharIndex = startCharIndex + event.charIndex;
+                    
+                    let wordCharIndex = -1;
+                    for (const [charIndex, element] of wordElementMap.entries()) {
+                         if (charIndex === absoluteCharIndex) {
+                            wordCharIndex = charIndex;
+                            break;
+                         }
+                    }
+                    highlightWord(wordCharIndex);
+                }
+            };
+
+            utterance.onend = () => {
+                if (extractedText.length > 0) {
+                     ui.status.textContent = 'Finished reading text.';
+                     ui.status.className = 'success';
+                }
+                stopSpeech(); 
+            };
+            
+            utterance.onerror = (e) => {
+                const isBenignEvent = !e.error && e.isTrusted;
+
+                if (!isBenignEvent) {
+                    console.error('Speech API Error:', e);
+                }
+                
+                if (!hasStarted) { 
+                    ui.status.textContent = 'Speech Error: Could not read text aloud.';
+                    ui.status.className = 'error';
+                    stopSpeech();
+                }
+            };
+            
+            function checkQueueAndSpeak(utterance) {
+                if (window.speechSynthesis.speaking) {
+                    setTimeout(() => checkQueueAndSpeak(utterance), 50);
+                } else {
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+            
+            checkQueueAndSpeak(utterance);
+        }
+
+        // --- 5. OCR Logic with Improved Detection ---
+
+        async function performOCR(imageData) {
+            stopSpeech(); 
+            ui.status.textContent = 'Processing image... This may take a moment.';
+            ui.status.className = 'processing';
+            ui.progressBar.classList.add('visible');
+            ui.controls.classList.remove('visible');
+            ui.readBtn.classList.remove('active'); 
+            ui.stopBtn.classList.remove('active');
+            ui.textOverlay.classList.remove('active');
+            
+            try {
+                const worker = await Tesseract.createWorker({
+                    logger: (m) => {
+                        if (m.status === 'recognizing text') {
+                            const progress = Math.round(m.progress * 100);
+                            ui.progressFill.style.width = progress + '%';
+                            ui.status.textContent = `Processing image... ${progress}%`;
+                        }
+                    }
+                });
+
+                await worker.loadLanguage('eng');
+                await worker.initialize('eng');
+                
+                // IMPROVED TEXT DETECTION SETTINGS:
+                // 1. Character whitelist - only recognize actual text characters
+                // 2. PSM AUTO - let Tesseract detect the page layout automatically
+                await worker.setParameters({
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?\'"@#$%&*()_+-=:;/ ',
+                    tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+                });
+                
+                const { data: { hocr } } = await worker.recognize(imageData, { text: true, hocr: true });
+                await worker.terminate();
+
+                // Get original image dimensions from the preview element
+                originalImageDimensions.width = ui.preview.naturalWidth;
+                originalImageDimensions.height = ui.preview.naturalHeight;
+
+                // Parse HOCR with 70% confidence threshold
+                const fullText = parseHOCR(hocr, 70);
+                extractedText = fullText.trim();
+                
+                if (extractedText.length > 0) {
+                    displayOverlayText();
+                    
+                    ui.controls.classList.add('visible');
+                    ui.readBtn.classList.add('active'); 
+                    ui.stopBtn.classList.add('active');
+                    ui.status.textContent = `Text extracted successfully! Found ${wordData.length} words. Click "Read Aloud" or click a word to start.`;
+                    ui.status.className = 'success';
+                } else {
+                    ui.status.textContent = 'No text found in the image. Try a clearer photo with better lighting.';
+                    ui.status.className = 'error';
+                }
+                
+                ui.progressBar.classList.remove('visible');
+                ui.progressFill.style.width = '0%';
+            } catch (error) {
+                ui.status.textContent = 'OCR Error: ' + error.message;
+                ui.status.className = 'error';
+                ui.progressBar.classList.remove('visible');
+            }
+        }
+        
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                ui.preview.onload = () => {
+                    ui.imageContainer.style.display = 'block';
+                    performOCR(e.target.result);
+                };
+                ui.preview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- 6. Event Listeners ---
+
+        ui.uploadArea.addEventListener('click', () => ui.fileInput.click());
+        ui.uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            ui.uploadArea.classList.add('dragover');
+        });
+        ui.uploadArea.addEventListener('dragleave', () => {
+            ui.uploadArea.classList.remove('dragover');
+        });
+        ui.uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            ui.uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+        ui.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        // TTS Control Button Handlers
+        ui.readBtn.addEventListener('click', () => {
+            if (extractedText) {
+                startSpeech(extractedText, 0, false);
+            }
+        });
+
+        ui.pauseBtn.addEventListener('click', () => {
+            if (window.speechSynthesis.speaking) {
+                if (isPaused) {
+                    window.speechSynthesis.resume();
+                    ui.pauseBtn.textContent = '⏸️ Pause';
+                    isPaused = false;
+                } else {
+                    window.speechSynthesis.pause();
+                    ui.pauseBtn.textContent = '▶️ Resume';
+                    isPaused = true;
+                }
+            }
+        });
+
+        ui.stopBtn.addEventListener('click', stopSpeech);
+
+        // Word Click Handler
+        function handleWordClick(event) {
+            const clickedWordSpan = event.target;
+            if (!clickedWordSpan.classList.contains('overlay-word')) return;
+
+            const startIndex = parseInt(clickedWordSpan.dataset.charIndex, 10);
+            const wordText = clickedWordSpan.textContent.trim(); 
+            
+            if (window.speechSynthesis.paused || !window.speechSynthesis.speaking) {
+                startSpeech(wordText, startIndex, true);
+            } else {
+                let newText = extractedText.substring(startIndex).trimStart();
+                const actualStartIndex = extractedText.indexOf(newText, startIndex);
+                startSpeech(newText, actualStartIndex, false);
+            }
+        }
+        
+        // Rerun alignment on window resize
+        window.addEventListener('resize', () => {
+            if (wordData.length > 0) {
+                displayOverlayText();
+            }
+        });
+    </script>
+</body>
+</html>
