@@ -522,7 +522,7 @@
                 // 2. PSM AUTO - let Tesseract detect the page layout automatically
                 await worker.setParameters({
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?\'"@#$%&*()_+-=:;/ ',
-                    tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+                    tessedit_pageseg_mode: Tesseract.PSM.AUTO_OSD,
                 });
                 
                 const { data: { hocr } } = await worker.recognize(imageData, { text: true, hocr: true });
@@ -532,8 +532,8 @@
                 originalImageDimensions.width = ui.preview.naturalWidth;
                 originalImageDimensions.height = ui.preview.naturalHeight;
 
-                // Parse HOCR with 70% confidence threshold
-                const fullText = parseHOCR(hocr, 70);
+                // Parse HOCR with 60% confidence threshold
+                const fullText = parseHOCR(hocr, 60);
                 extractedText = fullText.trim();
                 
                 if (extractedText.length > 0) {
