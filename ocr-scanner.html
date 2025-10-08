@@ -532,8 +532,8 @@
                 originalImageDimensions.width = ui.preview.naturalWidth;
                 originalImageDimensions.height = ui.preview.naturalHeight;
 
-                // Parse HOCR with 60% confidence threshold
-                const fullText = parseHOCR(hocr, 60);
+                // Parse HOCR with 45% confidence threshold
+                const fullText = parseHOCR(hocr, 45);
                 extractedText = fullText.trim();
                 
                 if (extractedText.length > 0) {
