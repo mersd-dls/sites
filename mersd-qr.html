@@ -281,18 +281,25 @@
                     const logoX = (512 - logoSize) / 2;
                     const logoY = (512 - logoSize) / 2;
                     
-                    // White background for logo
+                    // White circular background for logo
+                    const centerX = 256; // Center of 512px canvas
+                    const centerY = 256;
+                    const circleRadius = (logoSize / 2) + 3; // Slightly larger than logo
+
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(logoX - 10, logoY - 10, logoSize + 20, logoSize + 20);
-                    
-                    // Draw logo
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, circleRadius, 0, 2 * Math.PI);
+                    ctx.fill();
+                // Draw logo
                     ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
-                    
-                    // Border around logo
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(logoX - 10, logoY - 10, logoSize + 20, logoSize + 20);
-                };
+
+                // Circular border around logo
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, circleRadius, 0, 2 * Math.PI);
+                ctx.stroke();
+            };
                 logo.src = LOGO_URL;
             }
 
