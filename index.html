@@ -3,87 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Tools</title>
+    <title>Teacher Tools Portal</title>
     <style>
+        /* Base Styling */
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eef2f7; /* Light, modern background */
+            color: #333;
+        }
+
+        /* Main App Container - Centers content */
+        .app-container {
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
         }
+
+        /* Header Styling */
         .header {
             text-align: center;
             margin-bottom: 40px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-bottom: 3px solid #007cba; /* Highlight color */
+            border-radius: 0 0 8px 8px;
         }
+        .header h1 {
+            color: #007cba;
+            margin-bottom: 5px;
+        }
+        .header p {
+            color: #6a737d;
+        }
+
+        /* Tool Grid Layout */
+        #tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+            gap: 20px; /* Space between cards */
+            padding-top: 20px;
+        }
+
+        /* Tool Card Styling */
         .tool-card {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer shadow */
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; /* For button placement */
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px); /* Lift effect on hover */
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+        .tool-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .tool-description {
+            color: #7f8c8d;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            flex-grow: 1; /* Pushes button to the bottom */
         }
         .tool-button {
             display: inline-block;
-            background-color: #007cba;
+            background-color: #2ecc71; /* Green for action */
             color: white;
-            padding: 12px 24px;
+            padding: 10px 20px;
             text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
+            border-radius: 6px;
+            text-align: center;
             transition: background-color 0.3s;
+            font-weight: 500;
+            border: none; /* Look like a button, not a link */
+            cursor: pointer;
         }
         .tool-button:hover {
-            background-color: #005a87;
+            background-color: #27ae60;
         }
-        .tool-title {
-            font-size: 1.3em;
+
+        /* Tool Viewer (The Frame) */
+        #tool-viewer-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #eef2f7;
+            z-index: 1000;
+            display: none; /* Initially hidden */
+            flex-direction: column;
+        }
+        .tool-viewer-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #007cba;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: white;
+        }
+        #back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0 15px 0 0;
             font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
         }
-        .tool-description {
-            color: #666;
-            line-height: 1.5;
+        #tool-viewer-title {
+            font-size: 1.1em;
+            margin: 0;
+        }
+        #tool-iframe {
+            flex-grow: 1;
+            width: 100%;
+            border: none;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Teacher Tools</h1>
-        <p>A collection of useful educational tools and utilities</p>
+    <div class="app-container">
+        <div id="home-view">
+            <div class="header">
+                <h1>Teacher Tools</h1>
+                <p>A collection of useful educational tools and utilities. Select a tool below to get started.</p>
+            </div>
+
+            <div id="tool-grid">
+                <div class="tool-card">
+                    <div>
+                        <div class="tool-title">Lunch Choice Board</div>
+                        <div class="tool-description">Interactive lunch selection board for students to choose their meal options. Helps cafeteria staff track preferences and manage portions.</div>
+                    </div>
+                    <button class="tool-button open-tool" data-url="lunch_choice.html" data-title="Lunch Choice Board">Open Lunch Choice Board</button>
+                </div>
+
+                <div class="tool-card">
+                    <div>
+                        <div class="tool-title">QR Code Generator</div>
+                        <div class="tool-description">Generate branded QR codes for classroom activities, assignments, or sharing resources. Customizable with school branding and colors.</div>
+                    </div>
+                    <button class="tool-button open-tool" data-url="mersd-qr.html" data-title="QR Code Generator">Open QR Code Generator</button>
+                </div>
+
+                <div class="tool-card">
+                    <div>
+                        <div class="tool-title">OCR Visual Read Aloud</div>
+                        <div class="tool-description">Scan images containing text and have it read aloud. Perfect for accessibility support and helping students with reading difficulties.</div>
+                    </div>
+                    <button class="tool-button open-tool" data-url="ocr-scanner.html" data-title="OCR Visual Read Aloud">Open OCR Reader</button>
+                </div>
+
+                <div class="tool-card">
+                    <div>
+                        <div class="tool-title">Voice Recorder</div>
+                        <div class="tool-description">Simple audio recording tool that saves directly to Google Drive. Great for capturing student presentations, voice memos, or audio assignments.</div>
+                    </div>
+                    <button class="tool-button open-tool" data-url="voice-recorder-gdrive.html" data-title="Voice Recorder">Open Voice Recorder</button>
+                </div>
+                </div>
+        </div>
     </div>
 
-    <div class="tool-card">
-        <div class="tool-title">Lunch Choice Board</div>
-        <div class="tool-description">
-            Interactive lunch selection board for students to choose their meal options. Helps cafeteria staff track preferences and manage portions.
+    <div id="tool-viewer-container">
+        <div class="tool-viewer-header">
+            <button id="back-button">← Back</button>
+            <h2 id="tool-viewer-title">Tool Title</h2>
         </div>
-        <a href="lunch_choice.html" class="tool-button">Open Lunch Choice Board</a>
+        <iframe id="tool-iframe" src="" title="Tool Viewer"></iframe>
     </div>
 
-    <div class="tool-card">
-        <div class="tool-title">QR Code Generator</div>
-        <div class="tool-description">
-            Generate branded QR codes for classroom activities, assignments, or sharing resources. Customizable with school branding and colors.
-        </div>
-        <a href="mersd-qr.html" class="tool-button">Open QR Code Generator</a>
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toolButtons = document.querySelectorAll('.open-tool');
+            const toolViewer = document.getElementById('tool-viewer-container');
+            const toolIframe = document.getElementById('tool-iframe');
+            const backButton = document.getElementById('back-button');
+            const toolViewerTitle = document.getElementById('tool-viewer-title');
+            const homeView = document.getElementById('home-view');
 
-    <div class="tool-card">
-        <div class="tool-title">OCR Visual Read Aloud</div>
-        <div class="tool-description">
-            Scan images containing text and have it read aloud. Perfect for accessibility support and helping students with reading difficulties.
-        </div>
-        <a href="ocr-scanner.html" class="tool-button">Open OCR Reader</a>
-    </div>
+            // 1. Tool Button Click Handler (Opens the frame)
+            toolButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const url = e.currentTarget.getAttribute('data-url');
+                    const title = e.currentTarget.getAttribute('data-title');
 
-    <div class="tool-card">
-        <div class="tool-title">Voice Recorder</div>
-        <div class="tool-description">
-            Simple audio recording tool that saves directly to Google Drive. Great for capturing student presentations, voice memos, or audio assignments.
-        </div>
-        <a href="voice-recorder-gdrive.html" class="tool-button">Open Voice Recorder</a>
-    </div>
+                    // Set the iframe source and title
+                    toolIframe.src = url;
+                    toolViewerTitle.textContent = title;
+
+                    // Show the tool viewer frame and hide the home view
+                    toolViewer.style.display = 'flex';
+                    homeView.style.display = 'none';
+
+                    // Optional: Update URL for better browser history/sharing
+                    history.pushState({ tool: url }, title, `?tool=${encodeURIComponent(url)}`);
+                });
+            });
+
+            // 2. Back Button Click Handler (Closes the frame)
+            backButton.addEventListener('click', () => {
+                closeToolViewer();
+                // Optional: Update URL
+                history.pushState(null, 'Teacher Tools Portal', window.location.pathname);
+            });
+
+            function closeToolViewer() {
+                // Hide the tool viewer frame and show the home view
+                toolViewer.style.display = 'none';
+                homeView.style.display = 'block';
+
+                // Clear the iframe source to stop any audio/video
+                toolIframe.src = 'about:blank';
+                toolViewerTitle.textContent = '';
+            }
+
+            // 3. Handle browser back/forward buttons
+            window.addEventListener('popstate', (event) => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const toolUrl = urlParams.get('tool');
+
+                if (toolUrl) {
+                    // Re-open tool if URL parameter exists
+                    const button = document.querySelector(`.open-tool[data-url="${toolUrl}"]`);
+                    if (button) {
+                        button.click(); // Simulate a click to load the tool
+                    }
+                } else {
+                    // Go back to the main list
+                    closeToolViewer();
+                }
+            });
+
+            // 4. Initial Load Check (If someone links directly to a tool URL)
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialToolUrl = urlParams.get('tool');
+            if (initialToolUrl) {
+                const initialButton = document.querySelector(`.open-tool[data-url="${initialToolUrl}"]`);
+                if (initialButton) {
+                    initialButton.click();
+                }
+            }
+        });
+    </script>
 </body>
 </html>
