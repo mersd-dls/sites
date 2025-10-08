@@ -521,7 +521,7 @@
                 // 1. Character whitelist - only recognize actual text characters
                 // 2. PSM AUTO - let Tesseract detect the page layout automatically
                 await worker.setParameters({
-                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?\'"@#$%&*()_+-=:;/ ',
+                    //tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?\'"@#$%&*()_+-=:;/ ',
                     tessedit_pageseg_mode: Tesseract.PSM.AUTO_OSD,
                 });
                 
