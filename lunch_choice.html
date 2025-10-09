@@ -419,19 +419,19 @@
 
         /* Styles for when the choice column is "packed" with students */
         .choice-column.packed .choice-students {
-            flex-direction: row; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 5px; 
-        }
-        
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Creates two equal columns */
+            gap: 6px;
+            align-items: start; /* Aligns pucks to the top of their row */
+}
+
         .choice-column.packed .student-in-choice {
-            width: calc(50% - 5px); 
-            max-width: 160px; 
-            font-size: 10px;
-            padding: 6px 8px;
+             width: 100%; /* Make pucks fill the grid column width */
+             font-size: 11px; /* Slightly adjust font size for fit */
+             padding: 6px 8px;
             min-height: auto;
-        }
+            margin: 0;
+}
 
         .choice-count {
             background: #ff6b6b;
@@ -456,6 +456,102 @@
             .choices-section {
                 flex-direction: column;
             }
+        }
+
+        /* --- COMPACT LAYOUT STYLES --- */
+        
+        body {
+            padding: 10px; 
+            font-size: 14px; 
+        }
+        .header {
+            margin-bottom: 10px; 
+        }
+        .header h1 {
+            font-size: 1.6rem; 
+        }
+        .setup-page {
+            padding: 15px;
+            max-width: 550px; 
+        }
+        .setup-page h2 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        .palette-option {
+            width: 35px; 
+            height: 35px;
+        }
+        .setup-textarea {
+            height: 70px; 
+            margin-bottom: 10px;
+        }
+        .generate-btn {
+            padding: 10px 20px;
+            font-size: 15px;
+        }
+        .url-result {
+            margin-top: 15px;
+            padding: 10px;
+        }
+        .url-display {
+            font-size: 11px; 
+            padding: 6px;
+        }
+        .copy-btn, .load-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .controls {
+            margin-bottom: 10px;
+        }
+        .control-group {
+            padding: 8px;
+        }
+        .control-group label {
+            font-size: 0.85rem;
+            margin-bottom: 3px;
+        }
+        input[type="text"] {
+            width: 140px; 
+            padding: 5px;
+            font-size: 13px;
+        }
+        button {
+            padding: 6px 12px; 
+            font-size: 13px;
+        }
+        .main-container {
+            gap: 8px;
+            min-height: 0; 
+        }
+        .students-section, .choice-column {
+            padding: 10px; 
+        }
+        .section-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .choice-column {
+            min-height: 250px; 
+            border-width: 2px;
+        }
+        .choice-title {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        .choice-title input {
+            font-size: 0.9rem;
+        }
+        .choice-count {
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+        .student-puck, .student-in-choice {
+            padding: 5px 10px;
+            font-size: 12px;
+            min-width: 90px;
+            border-radius: 16px;
         }
     </style>
 </head>
