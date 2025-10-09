@@ -86,75 +86,10 @@
             font-weight: 500;
             border: none; /* Look like a button, not a link */
             cursor: pointer;
-            width: 100%; /* Make button full width of card padding */
         }
         .tool-button:hover {
             background-color: #27ae60;
         }
-
-        /* --- NEW CSS FOR TUTORIAL LINK & VIDEO MODAL --- */
-        .tutorial-link {
-            display: block;
-            text-align: center;
-            margin-top: 12px;
-            font-size: 0.9em;
-            color: #007cba;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .tutorial-link:hover {
-            text-decoration: underline;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 2000;
-            display: none; /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 800px;
-            position: relative;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .close-modal-button {
-            position: absolute;
-            top: -15px;
-            right: -15px;
-            background: #333;
-            color: white;
-            border: 2px solid white;
-            border-radius: 50%;
-            width: 35px;
-            height: 35px;
-            font-size: 1.2em;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-
-        #tutorial-video {
-            width: 100%;
-            height: auto;
-            border-radius: 4px;
-        }
-        /* --- END NEW CSS --- */
-
 
         /* Tool Viewer (The Frame) */
         #tool-viewer-container {
@@ -211,10 +146,7 @@
                         <div class="tool-title">QR Code Generator</div>
                         <div class="tool-description">Generate MERSD-branded QR codes for easily sharing links and resources.</div>
                     </div>
-                    <div>
-                        <button class="tool-button open-tool" data-url="mersd-qr.html" data-title="QR Code Generator">Open QR Code Generator</button>
-                        <a class="tutorial-link" data-video-src="videos/qr-tutorial.mp4">How do I use this?</a>
-                    </div>
+                    <button class="tool-button open-tool" data-url="mersd-qr.html" data-title="QR Code Generator">Open QR Code Generator</button>
                 </div>
 
                 <div class="tool-card">
@@ -222,10 +154,7 @@
                         <div class="tool-title">OCR Visual Read Aloud</div>
                         <div class="tool-description">Scan images containing text and have it read aloud. Works best with clear, high-contrast images containing only text.</div>
                     </div>
-                     <div>
-                        <button class="tool-button open-tool" data-url="ocr-scanner.html" data-title="OCR Visual Read Aloud">Open OCR Text Reader</button>
-                        <a class="tutorial-link" data-video-src="videos/ocr-tutorial.mp4">How do I use this?</a>
-                    </div>
+                    <button class="tool-button open-tool" data-url="ocr-scanner.html" data-title="OCR Visual Read Aloud">Open OCR Text Reader</button>
                 </div>
 
                 <div class="tool-card">
@@ -233,10 +162,7 @@
                         <div class="tool-title">Google Drive Voice Recorder</div>
                         <div class="tool-description">Simple audio recording tool that saves audio files directly to Google Drive.</div>
                     </div>
-                    <div>
-                        <button class="tool-button open-tool" data-url="voice-recorder-gdrive.html" data-title="GDrive Voice Recorder">Open Voice Recorder</button>
-                        <a class="tutorial-link" data-video-src="videos/recorder-tutorial.mp4">How do I use this?</a>
-                    </div>
+                    <button class="tool-button open-tool" data-url="voice-recorder-gdrive.html" data-title="GDrive Voice Recorder">Open Voice Recorder</button>
                 </div>
 
                 <div class="tool-card">
@@ -244,12 +170,9 @@
                         <div class="tool-title">Lunch Choice Board</div>
                         <div class="tool-description">Generate a custom lunch choice board with your class roster. Get a reusable link that you can bookmark in your browser.</div>
                     </div>
-                    <div>
-                        <button class="tool-button open-tool" data-url="lunch_choice.html" data-title="Lunch Choice Board">Open Lunch Choice Board</button>
-                        <a class="tutorial-link" data-video-src="videos/lunch-tutorial.mp4">How do I use this?</a>
-                    </div>
+                    <button class="tool-button open-tool" data-url="lunch_choice.html" data-title="Lunch Choice Board">Open Lunch Choice Board</button>
                 </div>
-            </div>
+                </div>
         </div>
     </div>
 
@@ -260,14 +183,6 @@
         </div>
         <iframe id="tool-iframe" src="" title="Tool Viewer"></iframe>
     </div>
-
-    <div id="video-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal-button">&times;</button>
-            <video id="tutorial-video" controls playsinline></video>
-        </div>
-    </div>
-
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -284,10 +199,15 @@
                     const url = e.currentTarget.getAttribute('data-url');
                     const title = e.currentTarget.getAttribute('data-title');
 
+                    // Set the iframe source and title
                     toolIframe.src = url;
                     toolViewerTitle.textContent = title;
+
+                    // Show the tool viewer frame and hide the home view
                     toolViewer.style.display = 'flex';
                     homeView.style.display = 'none';
+
+                    // Optional: Update URL for better browser history/sharing
                     history.pushState({ tool: url }, title, `?tool=${encodeURIComponent(url)}`);
                 });
             });
@@ -295,12 +215,16 @@
             // 2. Back Button Click Handler (Closes the frame)
             backButton.addEventListener('click', () => {
                 closeToolViewer();
+                // Optional: Update URL
                 history.pushState(null, 'Teacher Tools Portal', window.location.pathname);
             });
 
             function closeToolViewer() {
+                // Hide the tool viewer frame and show the home view
                 toolViewer.style.display = 'none';
                 homeView.style.display = 'block';
+
+                // Clear the iframe source to stop any audio/video
                 toolIframe.src = 'about:blank';
                 toolViewerTitle.textContent = '';
             }
@@ -311,16 +235,18 @@
                 const toolUrl = urlParams.get('tool');
 
                 if (toolUrl) {
+                    // Re-open tool if URL parameter exists
                     const button = document.querySelector(`.open-tool[data-url="${toolUrl}"]`);
                     if (button) {
-                        button.click();
+                        button.click(); // Simulate a click to load the tool
                     }
                 } else {
+                    // Go back to the main list
                     closeToolViewer();
                 }
             });
 
-            // 4. Initial Load Check
+            // 4. Initial Load Check (If someone links directly to a tool URL)
             const urlParams = new URLSearchParams(window.location.search);
             const initialToolUrl = urlParams.get('tool');
             if (initialToolUrl) {
@@ -329,45 +255,7 @@
                     initialButton.click();
                 }
             }
-
-
-            /* --- JAVASCRIPT FOR VIDEO MODAL --- */
-
-            // 5. Video Modal Handler
-            const tutorialLinks = document.querySelectorAll('.tutorial-link');
-            const videoModal = document.getElementById('video-modal');
-            const tutorialVideo = document.getElementById('tutorial-video');
-            const closeModalButton = document.querySelector('.close-modal-button');
-
-            tutorialLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault(); // Prevent link from navigating
-                    const videoSrc = e.currentTarget.getAttribute('data-video-src');
-                    
-                    tutorialVideo.src = videoSrc;
-                    // --- THIS IS THE NEW LINE ---
-                    tutorialVideo.muted = false; // Explicitly unmute the video
-                    
-                    videoModal.style.display = 'flex';
-                });
-            });
-
-            function closeVideoModal() {
-                videoModal.style.display = 'none';
-                tutorialVideo.pause(); // Stop the video from playing in the background
-                tutorialVideo.src = ''; // Clear the source
-            }
-
-            closeModalButton.addEventListener('click', closeVideoModal);
-            
-            // Also close the modal if the user clicks on the dark overlay
-            videoModal.addEventListener('click', (e) => {
-                if (e.target === videoModal) {
-                    closeVideoModal();
-                }
-            });
-
         });
     </script>
 </body>
-</html>
+</html> 
