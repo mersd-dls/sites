@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Toolkit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            padding: 15px;
+            transition: background 0.5s ease;
+            overflow: hidden;
+        }
+
+        .palette-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .palette-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .palette-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .palette-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .palette-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .palette-5 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .palette-6 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .palette-7 { background: linear-gradient(135deg, #30336b 0%, #130f40 100%); }
+
+        /* Setup Page */
+        .setup-page {
+            max-width: 650px;
+            margin: 50px auto;
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .setup-page h1 {
+            color: white;
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .setup-section {
+            margin-bottom: 20px;
+        }
+
+        .setup-section label {
+            color: white;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .setup-section input[type="text"],
+        .setup-section textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.95);
+        }
+
+        .setup-section textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .palette-selector {
+            margin-bottom: 15px;
+        }
+
+        .palette-grid {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .palette-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .palette-option:hover {
+            transform: scale(1.1);
+        }
+
+        .palette-option.selected {
+            border-color: white;
+            border-width: 4px;
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.4);
+        }
+
+        .generate-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .url-result {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .url-result h3 {
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .url-display {
+            background: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 5px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .url-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .url-buttons button {
+            flex: 1;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Main Board */
+        .main-board {
+            height: calc(100vh - 30px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .class-name {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-buttons button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .header-buttons button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .widgets-container {
+            flex: 1;
+            display: grid;
+            gap: 15px;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .widgets-container.one-widget {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+        }
+
+        .widgets-container.two-widgets {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: 1fr;
+        }
+
+        .widgets-container.three-widgets {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .widgets-container.three-widgets .widget:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .widget {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .widget-title {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .widget-close {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .widget-close:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.1);
+        }
+
+        .widget-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Widget Selector */
+        .widget-selector {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .widget-selector h3 {
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .widget-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .widget-buttons button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .widget-buttons button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .widget-buttons button.active {
+            background: rgba(255,255,255,0.4);
+            border-color: white;
+        }
+
+        /* Name Picker Widget */
+        .name-display {
+            font-size: 4rem;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .pick-button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .pick-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Group Generator Widget */
+        .group-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .group-controls label {
+            color: white;
+            font-weight: bold;
+        }
+
+        .group-controls input {
+            width: 80px;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .group-controls button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .groups-display {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            overflow-y: auto;
+            align-content: flex-start;
+        }
+
+        .group-box {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 12px;
+            min-width: 150px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .group-box h4 {
+            color: white;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .group-box ul {
+            list-style: none;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .group-box li {
+            padding: 3px 0;
+        }
+
+        /* Noise Meter Widget */
+        .noise-meter-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .noise-level-display {
+            font-size: 5rem;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            margin: 20px 0;
+        }
+
+        .noise-bar {
+            width: 80%;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .noise-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #43e97b, #fee140, #ff6b6b);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .noise-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .noise-controls label {
+            color: white;
+            font-weight: bold;
+        }
+
+        .noise-controls input {
+            width: 80px;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .exceeded-count {
+            color: white;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        /* Traffic Light Widget */
+        .traffic-light {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .light {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .light.red { background: #ff6b6b; }
+        .light.yellow { background: #fee140; }
+        .light.green { background: #43e97b; }
+
+        .light.inactive {
+            opacity: 0.3;
+            filter: grayscale(80%);
+        }
+
+        .light.active {
+            opacity: 1;
+            filter: grayscale(0%);
+            box-shadow: 0 0 30px currentColor;
+        }
+
+        .light.red.active { box-shadow: 0 0 30px #ff6b6b; }
+        .light.yellow.active { box-shadow: 0 0 30px #fee140; }
+        .light.green.active { box-shadow: 0 0 30px #43e97b; }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .widgets-container {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: auto !important;
+            }
+            
+            .widgets-container.three-widgets .widget:first-child {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body class="palette-0">
+
+    <!-- Setup Page -->
+    <div id="setupPage" class="setup-page">
+        <h1>🎓 Classroom Toolkit Setup</h1>
+        
+        <div class="setup-section">
+            <label>Class Name:</label>
+            <input type="text" id="className" placeholder="e.g., Mrs. Smith's 3rd Grade">
+        </div>
+
+        <div class="setup-section">
+            <label>Student Names (comma-separated):</label>
+            <textarea id="studentNames" placeholder="Emma, Liam, Olivia, Noah, Ava, Elijah, Sophia..."></textarea>
+        </div>
+
+        <div class="setup-section palette-selector">
+            <label>Color Theme:</label>
+            <div class="palette-grid">
+                <div class="palette-option selected" data-palette="0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                <div class="palette-option" data-palette="1" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                <div class="palette-option" data-palette="2" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                <div class="palette-option" data-palette="3" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+                <div class="palette-option" data-palette="4" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
+                <div class="palette-option" data-palette="5" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);"></div>
+                <div class="palette-option" data-palette="6" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);"></div>
+                <div class="palette-option" data-palette="7" style="background: linear-gradient(135deg, #30336b 0%, #130f40 100%);"></div>
+            </div>
+        </div>
+
+        <button class="generate-btn" onclick="generateToolkit()">Generate Toolkit</button>
+
+        <div id="urlResult" class="url-result hidden">
+            <h3>Your Classroom Toolkit URL:</h3>
+            <div id="urlDisplay" class="url-display"></div>
+            <div class="url-buttons">
+                <button onclick="copyUrl()">Copy URL</button>
+                <button onclick="loadToolkit()">Load Toolkit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Board -->
+    <div id="mainBoard" class="main-board hidden">
+        <div class="header">
+            <div class="class-name" id="displayClassName">My Class</div>
+            <div class="header-buttons">
+                <button onclick="backToSetup()">⚙️ Settings</button>
+            </div>
+        </div>
+
+        <div class="widget-selector">
+            <h3>Add Tools:</h3>
+            <div class="widget-buttons">
+                <button onclick="toggleWidget('namePicker')">🎯 Name Picker</button>
+                <button onclick="toggleWidget('groupGenerator')">👥 Group Generator</button>
+                <button onclick="toggleWidget('noiseMeter')">📊 Noise Meter</button>
+                <button onclick="toggleWidget('trafficLight')">🚦 Traffic Light</button>
+            </div>
+        </div>
+
+        <div id="widgetsContainer" class="widgets-container">
+            <!-- Widgets will be added here dynamically -->
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+        let className = '';
+        let selectedPalette = 0;
+        let generatedUrl = '';
+        let activeWidgets = [];
+        let pickedStudents = [];
+        let noiseLevel = 0;
+        let noiseMax = 80;
+        let noiseExceeded = 0;
+        let trafficLightState = 'green';
+        let noiseInterval = null;
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentsParam = urlParams.get('students');
+            const classNameParam = urlParams.get('class');
+            const paletteParam = urlParams.get('palette');
+            
+            if (paletteParam !== null) selectedPalette = parseInt(paletteParam) || 0;
+            applyPalette(selectedPalette);
+            
+            if (studentsParam) {
+                students = studentsParam.split(',').map(name => decodeURIComponent(name.trim())).filter(name => name);
+                className = classNameParam ? decodeURIComponent(classNameParam) : 'My Class';
+                showMainBoard();
+            } else {
+                showSetupPage();
+            }
+        };
+
+        function showSetupPage() {
+            document.getElementById('setupPage').classList.remove('hidden');
+            document.getElementById('mainBoard').classList.add('hidden');
+            initializePaletteSelector();
+        }
+
+        function showMainBoard() {
+            document.getElementById('setupPage').classList.add('hidden');
+            document.getElementById('mainBoard').classList.remove('hidden');
+            document.getElementById('displayClassName').textContent = className;
+        }
+
+        function initializePaletteSelector() {
+            const paletteOptions = document.querySelectorAll('.palette-option');
+            paletteOptions.forEach((option, index) => {
+                option.addEventListener('click', function() {
+                    paletteOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedPalette = index;
+                    applyPalette(selectedPalette);
+                });
+            });
+        }
+
+        function applyPalette(paletteIndex) {
+            for (let i = 0; i <= 7; i++) document.body.classList.remove(`palette-${i}`);
+            document.body.classList.add(`palette-${paletteIndex}`);
+        }
+
+        function generateToolkit() {
+            const namesInput = document.getElementById('studentNames').value;
+            const classInput = document.getElementById('className').value;
+            
+            if (!namesInput.trim()) {
+                alert('Please enter student names!');
+                return;
+            }
+
+            students = namesInput.split(',').map(name => name.trim()).filter(name => name);
+            className = classInput.trim() || 'My Class';
+            
+            const baseUrl = window.location.href.split('?')[0];
+            const encodedStudents = students.map(name => encodeURIComponent(name)).join(',');
+            const encodedClass = encodeURIComponent(className);
+            generatedUrl = `${baseUrl}?students=${encodedStudents}&class=${encodedClass}&palette=${selectedPalette}`;
+            
+            document.getElementById('urlDisplay').textContent = generatedUrl;
+            document.getElementById('urlResult').classList.remove('hidden');
+        }
+
+        function copyUrl() {
+            navigator.clipboard.writeText(generatedUrl).then(() => {
+                alert('URL copied to clipboard!');
+            });
+        }
+
+        function loadToolkit() {
+            showMainBoard();
+        }
+
+        function backToSetup() {
+            if (confirm('Return to setup? This will clear your current board.')) {
+                // Stop noise meter if running
+                stopNoiseMeter();
+                
+                activeWidgets = [];
+                pickedStudents = [];
+                noiseExceeded = 0;
+                
+                // Pre-fill the setup form with current values
+                document.getElementById('studentNames').value = students.join(', ');
+                document.getElementById('className').value = className;
+                
+                // Update palette selection
+                const paletteOptions = document.querySelectorAll('.palette-option');
+                paletteOptions.forEach((opt, idx) => {
+                    if (idx === selectedPalette) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+                
+                document.getElementById('urlResult').classList.add('hidden');
+                showSetupPage();
+            }
+        }
+
+        function toggleWidget(widgetName) {
+            const index = activeWidgets.indexOf(widgetName);
+            if (index > -1) {
+                activeWidgets.splice(index, 1);
+            } else {
+                activeWidgets.push(widgetName);
+            }
+            updateWidgetButtons();
+            renderWidgets();
+        }
+
+        function updateWidgetButtons() {
+            const buttons = document.querySelectorAll('.widget-buttons button');
+            buttons.forEach(button => {
+                const widgetName = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                if (activeWidgets.includes(widgetName)) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+        function renderWidgets() {
+            const container = document.getElementById('widgetsContainer');
+            container.innerHTML = '';
+            
+            // Update container class based on number of widgets
+            container.className = 'widgets-container';
+            if (activeWidgets.length === 1) container.classList.add('one-widget');
+            else if (activeWidgets.length === 2) container.classList.add('two-widgets');
+            else if (activeWidgets.length === 3) container.classList.add('three-widgets');
+            
+            activeWidgets.forEach(widgetName => {
+                const widget = createWidget(widgetName);
+                container.appendChild(widget);
+            });
+        }
+
+        function createWidget(widgetName) {
+            const widget = document.createElement('div');
+            widget.className = 'widget';
+            widget.id = `widget-${widgetName}`;
+            
+            const header = document.createElement('div');
+            header.className = 'widget-header';
+            
+            const title = document.createElement('div');
+            title.className = 'widget-title';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'widget-close';
+            closeBtn.textContent = '×';
+            closeBtn.onclick = () => toggleWidget(widgetName);
+            
+            header.appendChild(title);
+            header.appendChild(closeBtn);
+            
+            const content = document.createElement('div');
+            content.className = 'widget-content';
+            
+            widget.appendChild(header);
+            widget.appendChild(content);
+            
+            switch(widgetName) {
+                case 'namePicker':
+                    title.textContent = '🎯 Random Name Picker';
+                    renderNamePicker(content);
+                    break;
+                case 'groupGenerator':
+                    title.textContent = '👥 Group Generator';
+                    renderGroupGenerator(content);
+                    break;
+                case 'noiseMeter':
+                    title.textContent = '📊 Noise Meter';
+                    renderNoiseMeter(content);
+                    break;
+                case 'trafficLight':
+                    title.textContent = '🚦 Traffic Light';
+                    renderTrafficLight(content);
+                    break;
+            }
+            
+            return widget;
+        }
+
+        function renderNamePicker(container) {
+            const display = document.createElement('div');
+            display.className = 'name-display';
+            display.textContent = 'Click to pick!';
+            display.id = 'nameDisplay';
+            
+            const button = document.createElement('button');
+            button.className = 'pick-button';
+            button.textContent = 'Pick a Name';
+            button.onclick = pickRandomName;
+            
+            container.appendChild(display);
+            container.appendChild(button);
+        }
+
+        function pickRandomName() {
+            const availableStudents = students.filter(s => !pickedStudents.includes(s));
+            if (availableStudents.length === 0) {
+                pickedStudents = [];
+                alert('All students have been picked! Resetting...');
+                return;
+            }
+            
+            const display = document.getElementById('nameDisplay');
+            let counter = 0;
+            const maxSpins = 20;
+            
+            const interval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * availableStudents.length);
+                display.textContent = availableStudents[randomIndex];
+                counter++;
+                
+                if (counter >= maxSpins) {
+                    clearInterval(interval);
+                    const picked = availableStudents[Math.floor(Math.random() * availableStudents.length)];
+                    display.textContent = picked;
+                    pickedStudents.push(picked);
+                }
+            }, 100);
+        }
+
+        function renderGroupGenerator(container) {
+            const controls = document.createElement('div');
+            controls.className = 'group-controls';
+            controls.innerHTML = `
+                <label>Group Size:</label>
+                <input type="number" id="groupSize" value="4" min="2" max="10">
+                <button onclick="generateGroups()">Generate Groups</button>
+            `;
+            
+            const display = document.createElement('div');
+            display.className = 'groups-display';
+            display.id = 'groupsDisplay';
+            
+            container.appendChild(controls);
+            container.appendChild(display);
+        }
+
+        function generateGroups() {
+            const groupSize = parseInt(document.getElementById('groupSize').value);
+            const display = document.getElementById('groupsDisplay');
+            display.innerHTML = '';
+            
+            const shuffled = [...students].sort(() => Math.random() - 0.5);
+            const numGroups = Math.ceil(shuffled.length / groupSize);
+            
+            for (let i = 0; i < numGroups; i++) {
+                const groupBox = document.createElement('div');
+                groupBox.className = 'group-box';
+                
+                const groupTitle = document.createElement('h4');
+                groupTitle.textContent = `Group ${i + 1}`;
+                
+                const groupList = document.createElement('ul');
+                const start = i * groupSize;
+                const end = Math.min(start + groupSize, shuffled.length);
+                
+                for (let j = start; j < end; j++) {
+                    const li = document.createElement('li');
+                    li.textContent = shuffled[j];
+                    groupList.appendChild(li);
+                }
+                
+                groupBox.appendChild(groupTitle);
+                groupBox.appendChild(groupList);
+                display.appendChild(groupBox);
+            }
+        }
+
+        function renderNoiseMeter(container) {
+            const levelDisplay = document.createElement('div');
+            levelDisplay.className = 'noise-level-display';
+            levelDisplay.id = 'noiseLevelDisplay';
+            levelDisplay.textContent = '0';
+            
+            const bar = document.createElement('div');
+            bar.className = 'noise-bar';
+            const barFill = document.createElement('div');
+            barFill.className = 'noise-bar-fill';
+            barFill.id = 'noiseBarFill';
+            bar.appendChild(barFill);
+            
+            const controls = document.createElement('div');
+            controls.className = 'noise-controls';
+            controls.innerHTML = `
+                <label>Max Level:</label>
+                <input type="number" id="noiseMaxInput" value="80" min="50" max="100">
+                <button onclick="startNoiseMeter()">Start</button>
+                <button onclick="stopNoiseMeter()">Stop</button>
+                <button onclick="resetNoiseMeter()">Reset</button>
+            `;
+            
+            const exceeded = document.createElement('div');
+            exceeded.className = 'exceeded-count';
+            exceeded.id = 'exceededCount';
+            exceeded.textContent = 'Times Exceeded: 0';
+            
+            container.appendChild(levelDisplay);
+            container.appendChild(bar);
+            container.appendChild(controls);
+            container.appendChild(exceeded);
+        }
+
+        async function startNoiseMeter() {
+            if (noiseInterval) return;
+            noiseMax = parseInt(document.getElementById('noiseMaxInput').value) || 80;
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const analyser = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(stream);
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                analyser.smoothingTimeConstant = 0.8;
+                analyser.fftSize = 1024;
+                microphone.connect(analyser);
+                
+                noiseInterval = setInterval(() => {
+                    analyser.getByteFrequencyData(dataArray);
+                    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                    noiseLevel = Math.min(100, Math.floor(average / 2.55 * 1.5));
+                    
+                    document.getElementById('noiseLevelDisplay').textContent = noiseLevel;
+                    document.getElementById('noiseBarFill').style.width = noiseLevel + '%';
+                    
+                    if (noiseLevel > noiseMax) {
+                        noiseExceeded++;
+                        document.getElementById('exceededCount').textContent = `Times Exceeded: ${noiseExceeded}`;
+                    }
+                }, 100);
+                
+                // Store stream to stop later
+                window.currentAudioStream = stream;
+            } catch (err) {
+                alert('Microphone access denied or not available. Please allow microphone access to use the noise meter.');
+                console.error('Microphone error:', err);
+            }
+        }
+
+        function stopNoiseMeter() {
+            if (noiseInterval) {
+                clearInterval(noiseInterval);
+                noiseInterval = null;
+            }
+            
+            // Stop microphone stream
+            if (window.currentAudioStream) {
+                window.currentAudioStream.getTracks().forEach(track => track.stop());
+                window.currentAudioStream = null;
+            }
+        }
+
+        function resetNoiseMeter() {
+            stopNoiseMeter();
+            noiseLevel = 0;
+            noiseExceeded = 0;
+            document.getElementById('noiseLevelDisplay').textContent = '0';
+            document.getElementById('noiseBarFill').style.width = '0%';
+            document.getElementById('exceededCount').textContent = 'Times Exceeded: 0';
+        }
+
+        function renderTrafficLight(container) {
+            const trafficDiv = document.createElement('div');
+            trafficDiv.className = 'traffic-light';
+            
+            const redLight = document.createElement('div');
+            redLight.className = 'light red inactive';
+            redLight.onclick = () => setTrafficLight('red');
+            
+            const yellowLight = document.createElement('div');
+            yellowLight.className = 'light yellow inactive';
+            yellowLight.onclick = () => setTrafficLight('yellow');
+            
+            const greenLight = document.createElement('div');
+            greenLight.className = 'light green active';
+            greenLight.onclick = () => setTrafficLight('green');
+            
+            trafficDiv.appendChild(redLight);
+            trafficDiv.appendChild(yellowLight);
+            trafficDiv.appendChild(greenLight);
+            
+            container.appendChild(trafficDiv);
+        }
+
+        function setTrafficLight(color) {
+            const widget = document.getElementById('widget-trafficLight');
+            if (!widget) return;
+            
+            const lights = widget.querySelectorAll('.light');
+            lights.forEach(light => {
+                light.classList.remove('active');
+                light.classList.add('inactive');
+            });
+            
+            const activeLight = widget.querySelector(`.light.${color}`);
+            if (activeLight) {
+                activeLight.classList.remove('inactive');
+                activeLight.classList.add('active');
+            }
+            
+            trafficLightState = color;
+        }
+    </script>
+</body>
+</html>
