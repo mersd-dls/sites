@@ -20,36 +20,47 @@
             padding: 20px;
             transition: background 0.5s ease;
             touch-action: none;
-            position: relative;
+            position: relative; /* Needed for absolute positioning of emoji layer */
         }
 
-        .emoji-background {
+        /* NEW: Emoji Background Layer */
+        .emoji-background { 
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.15;
-            background-image: repeating-linear-gradient(45deg, transparent 0, transparent 100px, rgba(0, 0, 0, 0.05) 100px, rgba(0, 0, 0, 0.05) 200px);
+            pointer-events: none; /* Allows clicks to pass through */
+            z-index: 0; /* Ensures it stays behind content */
+            opacity: 0.15; /* Set to very low opacity */
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent 0,
+                transparent 100px,
+                rgba(0, 0, 0, 0.05) 100px,
+                rgba(0, 0, 0, 0.05) 200px
+            );
         }
         
+        /* NEW: Content for the Emoji Background */
         .emoji-background::before {
-            content: "🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃";
+            content: "🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍣🍜🍟🍕🍔🥗🌮🍇🍓🍌🥕🥦🧀🥚🥞🥣🍝🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍊🍗🍖🥩🥓🍿🌭🍤🥪🥙🧇🥛☕️🥤🧃🍕🍟🥗🥪🧀🥚🧇🥞🥣🍝🍣🍜🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃🍔🌭🍿🥓🥩🍗🍖🌮🌯🥙🍎🍇🍓🍌🍊🥕🥦🧀🥚🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍄🥛☕️🥤🧃🍕🍔🍟🌭🍿🥓🥩🍗🍖🌮🌯🥙🥗🥪🧀🥚🧇🥞🥣🍝🍜🍣🍤🍚🍙🍞🥐🥨🍩🍪🎂🍰🍦🍧🍬🍭🍫🍯🍎🍇🍓🍌🍊🥕🥦🍄🥛☕️🥤🧃"; /* Your Food Emojis */
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            font-size: 50px;
+            font-size: 50px; /* Adjust size as needed */
             line-height: 1.5;
             word-break: break-all;
             white-space: pre-wrap;
-            opacity: 1;
-            color: #ffffff;
+            opacity: 1; /* Apply the main opacity to the container, not the content */
+            color: #ffffff; /* Make the emojis white/light to contrast with dark background */
         }
+        /* End NEW Emoji Background Styles */
 
+
+        /* Color Palettes */
         .palette-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .palette-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
         .palette-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
@@ -63,7 +74,7 @@
             text-align: center;
             color: white;
             margin-bottom: 20px;
-            position: relative;
+            position: relative; /* Bring to front of emoji layer */
             z-index: 1;
         }
 
@@ -82,7 +93,7 @@
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255,255,255,0.2);
             text-align: center;
-            position: relative;
+            position: relative; /* Bring to front of emoji layer */
             z-index: 1;
         }
 
@@ -153,6 +164,11 @@
             background: rgba(255,255,255,0.95);
         }
 
+        .setup-textarea::placeholder {
+            color: #666;
+            font-style: italic;
+        }
+
         .generate-btn {
             background: #4facfe;
             color: white;
@@ -163,6 +179,13 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .generate-btn:hover {
+            background: #3d8bfe;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
         }
 
         .url-result {
@@ -205,6 +228,13 @@
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover, .load-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .controls {
@@ -213,7 +243,7 @@
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
-            position: relative;
+            position: relative; /* Bring to front of emoji layer */
             z-index: 1;
         }
 
@@ -252,16 +282,18 @@
             transition: all 0.3s ease;
             margin: 4px;
         }
-        
+
         button:hover {
+            background: #ff5252;
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .main-container {
             display: flex;
             gap: 10px;
             min-height: 500px;
-            position: relative;
+            position: relative; /* Bring to front of emoji layer */
             z-index: 1;
         }
 
@@ -286,6 +318,7 @@
             font-weight: bold;
             text-align: center;
             margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
         .students-grid {
@@ -295,6 +328,7 @@
             justify-content: center;
         }
 
+        /* The core draggable element */
         .student-puck, .student-in-choice {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
@@ -302,25 +336,31 @@
             border-radius: 20px;
             font-weight: bold;
             font-size: 14px;
-            cursor: grab;
+            cursor: grab; /* Set cursor to indicate grab */
             transition: all 0.3s ease;
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
             border: 2px solid rgba(255,255,255,0.3);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             min-width: 100px;
             text-align: center;
-            touch-action: none;
-            position: relative;
+            touch-action: none; /* Prevent browser from handling touch */
+            position: relative; /* Essential for positioning when dragging */
             z-index: 1;
         }
         
         .student-puck.dragging, .student-in-choice.dragging {
-            position: fixed;
+            position: fixed; /* Use fixed for smooth dragging over all elements */
             transform: translate(var(--drag-x), var(--drag-y)) scale(1.1) rotate(5deg);
             z-index: 1000;
             opacity: 0.8;
             box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-            cursor: grabbing;
-            transition: none;
+            cursor: grabbing; /* Change cursor while dragging */
+            transition: none; /* Disable transition during drag for smoothness */
+        }
+        
+        .student-puck:hover, .student-in-choice:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
         }
 
         .choice-column {
@@ -339,6 +379,7 @@
         .choice-column.drag-over {
             border-color: #4facfe;
             background: rgba(79, 172, 254, 0.2);
+            transform: scale(1.02);
         }
 
         .choice-title {
@@ -350,6 +391,7 @@
             font-weight: bold;
             font-size: 1rem;
             margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
         .choice-title input {
@@ -362,6 +404,10 @@
             width: 100%;
         }
 
+        .choice-title input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
         .choice-students {
             flex: 1;
             display: flex;
@@ -370,6 +416,22 @@
             align-items: center;
             padding: 8px;
         }
+
+        /* Styles for when the choice column is "packed" with students */
+        .choice-column.packed .choice-students {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Creates two equal columns */
+            gap: 6px;
+            align-items: start; /* Aligns pucks to the top of their row */
+}
+
+        .choice-column.packed .student-in-choice {
+             width: 100%; /* Make pucks fill the grid column width */
+             font-size: 11px; /* Slightly adjust font size for fit */
+             padding: 6px 8px;
+            min-height: auto;
+            margin: 0;
+}
 
         .choice-count {
             background: #ff6b6b;
@@ -387,46 +449,41 @@
         }
 
         @media (max-width: 1024px) {
-            .main-container { flex-direction: column; }
-            .choices-section { flex-direction: column; }
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .choices-section {
+                flex-direction: column;
+            }
         }
 
-        /* --- STYLES FOR INITIAL SCREEN COMPACTNESS --- */
+        /* --- COMPACT LAYOUT STYLES --- */
+        
         body {
-            padding: 10px;
+            padding: 10px; 
+            font-size: 14px; 
+        }
+        .header {
+            margin-bottom: 10px; 
         }
         .header h1 {
-            font-size: 1.6rem;
+            font-size: 1.6rem; 
         }
         .setup-page {
             padding: 15px;
-            max-width: 550px;
+            max-width: 550px; 
         }
         .setup-page h2 {
             font-size: 1.3rem;
             margin-bottom: 10px;
         }
-        .setup-page p {
-             margin-bottom: 8px;
-             color: rgba(255, 255, 255, 0.9);
-        }
-        .palette-selector {
-            margin-bottom: 10px;
-        }
-        .palette-selector h3 {
-            font-size: 1rem;
-            margin-bottom: 8px;
-        }
-        .palette-grid {
-            gap: 8px;
-            margin-bottom: 8px;
-        }
         .palette-option {
-            width: 35px;
+            width: 35px; 
             height: 35px;
         }
         .setup-textarea {
-            height: 65px;
+            height: 70px; 
             margin-bottom: 10px;
         }
         .generate-btn {
@@ -434,35 +491,75 @@
             font-size: 15px;
         }
         .url-result {
-            margin-top: 10px;
+            margin-top: 15px;
             padding: 10px;
         }
-        /* --- END COMPACT STYLES --- */
-        
-        /* --- NEW: MULTI-COLUMN PACKING LOGIC --- */
-        .choice-column.packed-2-cols .choice-students,
-        .choice-column.packed-3-cols .choice-students,
-        .choice-column.packed-4-cols .choice-students {
-            display: grid;
-            gap: 4px; /* Tighter gap for packed pucks */
-            align-content: start; /* Aligns pucks to the top */
+        .url-display {
+            font-size: 11px; 
+            padding: 6px;
         }
-        .choice-column.packed-2-cols .choice-students { grid-template-columns: 1fr 1fr; }
-        .choice-column.packed-3-cols .choice-students { grid-template-columns: 1fr 1fr 1fr; }
-        .choice-column.packed-4-cols .choice-students { grid-template-columns: 1fr 1fr 1fr 1fr; }
-
-        .choice-column[class*="packed-"] .student-in-choice {
-            width: 100%;
-            font-size: 10px; /* Smallest font for max packing */
+        .copy-btn, .load-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .controls {
+            margin-bottom: 10px;
+        }
+        .control-group {
+            padding: 8px;
+        }
+        .control-group label {
+            font-size: 0.85rem;
+            margin-bottom: 3px;
+        }
+        input[type="text"] {
+            width: 140px; 
             padding: 5px;
-            min-height: auto;
-            margin: 0;
-            min-width: 0; /* Allow puck to shrink fully */
+            font-size: 13px;
         }
-        /* --- END MULTI-COLUMN --- */
+        button {
+            padding: 6px 12px; 
+            font-size: 13px;
+        }
+        .main-container {
+            gap: 8px;
+            min-height: 0; 
+        }
+        .students-section, .choice-column {
+            padding: 10px; 
+        }
+        .section-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .choice-column {
+            min-height: 250px; 
+            border-width: 2px;
+        }
+        .choice-title {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        .choice-title input {
+            font-size: 0.9rem;
+        }
+        .choice-count {
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+        .student-puck, .student-in-choice {
+            padding: 5px 10px;
+            font-size: 12px;
+            min-width: 90px;
+            border-radius: 16px;
+        }
     </style>
 </head>
 <body class="palette-0"> <div class="emoji-background"></div>
+
+    <div class="header">
+        <h1>🍽️ Lunch Choice Board 🍽️</h1>
+    </div>
 
     <div id="setupPage" class="setup-page">
         <h2>Create Your Lunch Choice Board</h2>
@@ -483,7 +580,7 @@
             <p class="palette-note">Selected: <span id="selectedPaletteName">Classic Purple</span></p>
         </div>
         
-        <textarea id="setupStudentNames" class="setup-textarea" placeholder="Emma, Liam, Olivia, Noah, Ava, Elijah, Sophia..."></textarea>
+        <textarea id="setupStudentNames" class="setup-textarea" placeholder="Emma, Liam, Olivia, Noah, Ava, Elijah, Sophia, Lucas, Isabella, Mason, Mia, Ethan, Charlotte, Alexander, Amelia, Michael, Harper, Benjamin, Evelyn, Jacob, Abigail..."></textarea>
         
         <button onclick="generateBoard()" class="generate-btn">Generate Choice Board</button>
         
@@ -525,19 +622,25 @@
 
             <div class="choices-section">
                 <div class="choice-column" data-choice="lunch1">
-                    <div class="choice-title"><input type="text" id="lunch1Title" placeholder="School Lunch 1" readonly></div>
+                    <div class="choice-title">
+                        <input type="text" id="lunch1Title" placeholder="School Lunch 1" readonly>
+                    </div>
                     <div class="choice-students" id="lunch1Students"></div>
                     <div class="choice-count" id="lunch1Count">Count: 0</div>
                 </div>
 
                 <div class="choice-column" data-choice="lunch2">
-                    <div class="choice-title"><input type="text" id="lunch2Title" placeholder="School Lunch 2" readonly></div>
+                    <div class="choice-title">
+                        <input type="text" id="lunch2Title" placeholder="School Lunch 2" readonly>
+                    </div>
                     <div class="choice-students" id="lunch2Students"></div>
                     <div class="choice-count" id="lunch2Count">Count: 0</div>
                 </div>
 
                 <div class="choice-column" data-choice="lunch3">
-                    <div class="choice-title"><input type="text" id="lunch3Title" placeholder="School Lunch 3" readonly></div>
+                    <div class="choice-title">
+                        <input type="text" id="lunch3Title" placeholder="School Lunch 3" readonly>
+                    </div>
                     <div class="choice-students" id="lunch3Students"></div>
                     <div class="choice-count" id="lunch3Count">Count: 0</div>
                 </div>
@@ -553,18 +656,29 @@
 
     <script>
         let students = [];
-        let choices = { lunch1: [], lunch2: [], lunch3: [], home: [] };
+        let choices = {
+            lunch1: [],
+            lunch2: [],
+            lunch3: [],
+            home: []
+        };
         let generatedUrl = '';
         let selectedPalette = 0;
+        const studentsPerColumn = 7;
         
-        const paletteNames = ["Classic Purple", "Berry Blast", "Ocean Blue", "Fresh Green", "Sunset Glow", "Soft Pastels", "Cotton Candy", "Midnight Dark"];
+        const paletteNames = [
+            "Classic Purple", "Berry Blast", "Ocean Blue", "Fresh Green",
+            "Sunset Glow", "Soft Pastels", "Cotton Candy", "Midnight Dark"
+        ];
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const studentsParam = urlParams.get('students');
             const paletteParam = urlParams.get('palette');
             
-            if (paletteParam !== null) selectedPalette = parseInt(paletteParam) || 0;
+            if (paletteParam !== null) {
+                selectedPalette = parseInt(paletteParam) || 0;
+            }
             applyPalette(selectedPalette);
             
             if (studentsParam) {
@@ -573,6 +687,7 @@
                 updateDisplay();
             } else {
                 showSetupPage();
+                initializePaletteSelector();
             }
         };
 
@@ -593,7 +708,9 @@
         }
 
         function applyPalette(paletteIndex) {
-            for (let i = 0; i <= 7; i++) document.body.classList.remove(`palette-${i}`);
+            for (let i = 0; i <= 7; i++) {
+                document.body.classList.remove(`palette-${i}`);
+            }
             document.body.classList.add(`palette-${paletteIndex}`);
         }
 
@@ -610,9 +727,13 @@
 
         function generateBoard() {
             const namesInput = document.getElementById('setupStudentNames').value;
-            if (!namesInput.trim()) return;
+            if (!namesInput.trim()) {
+                showMessage('Please enter student names first!', '#ff6b6b');
+                return;
+            }
 
             students = namesInput.split(',').map(name => name.trim()).filter(name => name);
+            
             const baseUrl = window.location.href.split('?')[0];
             const encodedStudents = students.map(name => encodeURIComponent(name)).join(',');
             generatedUrl = `${baseUrl}?students=${encodedStudents}&palette=${selectedPalette}`;
@@ -630,7 +751,17 @@
         }
 
         function copyUrl() {
-            navigator.clipboard.writeText(generatedUrl).then(() => showMessage('URL Copied!', '#4facfe'));
+            navigator.clipboard.writeText(generatedUrl).then(function() {
+                showMessage('URL Copied!', '#4facfe');
+            }).catch(function() {
+                const textArea = document.createElement('textarea');
+                textArea.value = generatedUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('URL Copied!', '#4facfe');
+            });
         }
 
         function loadBoard() {
@@ -640,44 +771,65 @@
         }
 
         function backToSetup() {
-            // ORIGINAL, WORKING POPUP
             const messageBox = document.createElement('div');
             messageBox.textContent = 'Are you sure you want to create a new student list? This will clear the current board.';
             messageBox.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff6b6b; color: white; padding: 20px; border-radius: 10px; z-index: 9999; box-shadow: 0 4px 8px rgba(0,0,0,0.2);';
+            
             const confirmBtn = document.createElement('button');
             confirmBtn.textContent = 'Confirm';
+            confirmBtn.style.cssText = 'background: #43e97b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;';
             confirmBtn.onclick = () => {
                 history.pushState({}, '', window.location.href.split('?')[0]);
+                students = [];
+                choices = { lunch1: [], lunch2: [], lunch3: [], home: [] };
                 document.getElementById('setupStudentNames').value = '';
                 document.getElementById('urlResult').classList.add('hidden');
                 showSetupPage();
                 messageBox.remove();
             };
+
             const cancelBtn = document.createElement('button');
             cancelBtn.textContent = 'Cancel';
-            cancelBtn.onclick = () => messageBox.remove();
+            cancelBtn.style.cssText = 'background: #d3d3d3; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px; margin-top: 10px;';
+            cancelBtn.onclick = () => {
+                messageBox.remove();
+            };
+
             messageBox.appendChild(document.createElement('br'));
             messageBox.appendChild(confirmBtn);
             messageBox.appendChild(cancelBtn);
             document.body.appendChild(messageBox);
         }
 
-        document.getElementById('lunch1').addEventListener('input', e => document.getElementById('lunch1Title').value = e.target.value);
-        document.getElementById('lunch2').addEventListener('input', e => document.getElementById('lunch2Title').value = e.target.value);
-        document.getElementById('lunch3').addEventListener('input', e => document.getElementById('lunch3Title').value = e.target.value);
+        document.getElementById('lunch1').addEventListener('input', function() {
+            document.getElementById('lunch1Title').value = this.value;
+        });
+        document.getElementById('lunch2').addEventListener('input', function() {
+            document.getElementById('lunch2Title').value = this.value;
+        });
+        document.getElementById('lunch3').addEventListener('input', function() {
+            document.getElementById('lunch3Title').value = this.value;
+        });
 
         function updateDisplay() {
             updateStudentsGrid();
             updateChoiceColumns();
             updateCounts();
+            
+            document.getElementById('lunch1Title').value = document.getElementById('lunch1').value;
+            document.getElementById('lunch2Title').value = document.getElementById('lunch2').value;
+            document.getElementById('lunch3Title').value = document.getElementById('lunch3').value;
         }
 
         function updateStudentsGrid() {
             const grid = document.getElementById('studentsGrid');
             grid.innerHTML = '';
-            const assignedStudents = [].concat(...Object.values(choices));
+            const assignedStudents = [...choices.lunch1, ...choices.lunch2, ...choices.lunch3, ...choices.home];
             const unassignedStudents = students.filter(student => !assignedStudents.includes(student));
-            unassignedStudents.forEach(student => grid.appendChild(createStudentPuck(student)));
+
+            unassignedStudents.forEach(student => {
+                grid.appendChild(createStudentPuck(student));
+            });
         }
 
         function createStudentPuck(studentName) {
@@ -694,20 +846,16 @@
                 const column = container.closest('.choice-column');
                 container.innerHTML = '';
                 
-                // --- JAVASCRIPT LOGIC FOR MULTI-COLUMN PACKING ---
-                column.classList.remove('packed-2-cols', 'packed-3-cols', 'packed-4-cols');
-                if (choices[choiceType].length > 21) {
-                    column.classList.add('packed-4-cols');
-                } else if (choices[choiceType].length > 14) {
-                    column.classList.add('packed-3-cols');
-                } else if (choices[choiceType].length > 7) {
-                    column.classList.add('packed-2-cols');
+                if (choices[choiceType].length > studentsPerColumn) {
+                    column.classList.add('packed');
+                } else {
+                    column.classList.remove('packed');
                 }
-                // --- END LOGIC ---
                 
                 choices[choiceType].forEach(student => {
                     const studentElement = createStudentPuck(student);
-                    studentElement.className = 'student-in-choice';
+                    studentElement.classList.remove('student-puck');
+                    studentElement.classList.add('student-in-choice');
                     container.appendChild(studentElement);
                 });
             });
@@ -715,32 +863,39 @@
 
         function updateCounts() {
             ['lunch1', 'lunch2', 'lunch3', 'home'].forEach(choiceType => {
-                document.getElementById(choiceType + 'Count').textContent = `Count: ${choices[choiceType].length}`;
+                const count = choices[choiceType].length;
+                document.getElementById(choiceType + 'Count').textContent = `Count: ${count}`;
             });
         }
 
         function resetBoard() {
-            // ORIGINAL, WORKING POPUP
             const messageBox = document.createElement('div');
-            messageBox.textContent = 'Are you sure you want to reset the board?';
-            messageBox.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff6b6b; color: white; padding: 20px; border-radius: 10px; z-index: 9999; text-align: center;';
+            messageBox.textContent = 'Are you sure you want to reset the board? This will move all students back to the unassigned area.';
+            messageBox.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff6b6b; color: white; padding: 20px; border-radius: 10px; z-index: 9999; box-shadow: 0 4px 8px rgba(0,0,0,0.2); text-align: center;';
+            
             const confirmBtn = document.createElement('button');
             confirmBtn.textContent = 'Confirm';
+            confirmBtn.style.cssText = 'background: #43e97b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;';
             confirmBtn.onclick = () => {
                 choices = { lunch1: [], lunch2: [], lunch3: [], home: [] };
                 updateDisplay();
                 messageBox.remove();
             };
+
             const cancelBtn = document.createElement('button');
             cancelBtn.textContent = 'Cancel';
-            cancelBtn.onclick = () => messageBox.remove();
+            cancelBtn.style.cssText = 'background: #d3d3d3; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px; margin-top: 10px;';
+            cancelBtn.onclick = () => {
+                messageBox.remove();
+            };
+
             messageBox.appendChild(document.createElement('br'));
             messageBox.appendChild(confirmBtn);
             messageBox.appendChild(cancelBtn);
             document.body.appendChild(messageBox);
         }
 
-        // ORIGINAL, WORKING DRAG & DROP LOGIC
+        // Custom Drag & Drop Logic
         let draggedElement = null;
         let draggedClone = null;
         let offsetX = 0, offsetY = 0;
@@ -758,9 +913,11 @@
                 const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
                 
+                // Calculate offset from pointer to element's top-left corner
                 offsetX = clientX - rect.left;
                 offsetY = clientY - rect.top;
                 
+                // Create a clone for dragging
                 draggedClone = draggedElement.cloneNode(true);
                 draggedClone.style.position = 'fixed';
                 draggedClone.style.left = `${rect.left}px`;
@@ -772,6 +929,7 @@
                 draggedClone.classList.add('dragging');
                 document.body.appendChild(draggedClone);
                 
+                // Hide the original element
                 draggedElement.style.opacity = '0.3';
 
                 if (e.type === 'touchstart') {
@@ -791,13 +949,16 @@
             const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
             const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
 
+            // Position clone so it follows the pointer, accounting for the offset
             draggedClone.style.left = `${clientX - offsetX}px`;
             draggedClone.style.top = `${clientY - offsetY}px`;
 
             const dropZone = document.elementFromPoint(clientX, clientY)?.closest('.choice-column, .students-section');
 
             document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-            if (dropZone) dropZone.classList.add('drag-over');
+            if (dropZone) {
+                dropZone.classList.add('drag-over');
+            }
         }
 
         function endDrag(e) {
@@ -815,15 +976,19 @@
             
             if (dropZone) {
                 const choiceType = dropZone.dataset.choice;
-                if (choiceType !== 'unassigned') choices[choiceType].push(studentName);
+                if (choiceType !== 'unassigned') {
+                    choices[choiceType].push(studentName);
+                }
             }
             
-            draggedElement.style.opacity = '1';
+            // Clean up CSS for the original element
+            draggedElement.style.opacity = '1'; // Restore full opacity to the original element
             
+            // NEW: Remove the temporary dragging clone
             if (draggedClone && draggedClone.parentNode) {
                 draggedClone.parentNode.removeChild(draggedClone); 
             }
-            draggedClone = null;
+            draggedClone = null; // Reset the global clone variable
 
             document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
             
