@@ -276,8 +276,7 @@
         const audioPlayback = document.getElementById('audioPlayback');
         const audioContainer = document.getElementById('audioContainer');
         const filenameInput = document.getElementById('filename');
-        
-        // const recordAgainBtn = document.getElementById('recordAgainBtn');
+        const recordAgainBtn = document.getElementById('recordAgainBtn');
         const saveControls = document.querySelector('.save-controls');
 
         // Check if Client ID is configured
@@ -315,7 +314,6 @@
             const buffer = new ArrayBuffer(44 + audioData.length * 2);
             const view = new DataView(buffer);
 
-            // WAV header
             writeString(view, 0, 'RIFF');
             view.setUint32(4, 36 + audioData.length * 2, true);
             writeString(view, 8, 'WAVE');
@@ -330,7 +328,6 @@
             writeString(view, 36, 'data');
             view.setUint32(40, audioData.length * 2, true);
 
-            // Write audio data
             const volume = 1;
             let index = 44;
             for (let i = 0; i < audioData.length; i++) {
@@ -406,26 +403,33 @@
 
             clearInterval(timerInterval);
 
-            // // It will be re-enabled by the reset function.
+            // **MODIFIED**: The start button is NOT re-enabled here.
+            // This prevents starting a new recording before resetting.
             stopBtn.disabled = true;
             status.textContent = 'Recording complete';
             status.classList.remove('recording');
         });
         
+        // **FIXED**: This function is now more robust and correctly resets the UI.
         function resetForNewRecording() {
             audioContainer.style.display = 'none';
             recordAgainBtn.style.display = 'none';
             saveControls.style.display = 'flex';
 
+            // Correctly clean up the old audio blob to prevent errors
+            if (audioPlayback.src) {
+                URL.revokeObjectURL(audioPlayback.src);
+            }
             audioPlayback.src = '';
-            URL.revokeObjectURL(audioPlayback.src);
             audioBlob = null;
             
             timer.textContent = '00:00';
             status.textContent = 'Ready to record';
             
-            // Reset button states
-            startBtn.disabled = false; // saveBtn.disabled = false;
+            // Explicitly reset all button states for the new recording
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            saveBtn.disabled = false;
             saveBtn.textContent = 'Save to Drive';
             saveBtn.style.background = '#10b981';
         }
@@ -491,14 +495,17 @@
                     alert('✓ Successfully saved to Google Drive!\nFilename: ' + filename);
                     saveBtn.textContent = '✓ Saved!';
                     saveBtn.style.background = '#059669';
+                    // NOTE: The button remains disabled after success, which is intended.
+                    // The reset function will properly re-enable it for the next recording.
                 } else {
                     throw new Error('Upload failed: ' + response.statusText);
                 }
             } catch (err) {
                 alert('Error saving to Google Drive: ' + err.message + '\n\nYou can use the Download button to save locally instead.');
                 saveBtn.textContent = 'Save to Drive';
-                saveBtn.disabled = false;
+                saveBtn.disabled = false; // Re-enable only on failure
             } finally {
+                // This block runs on success or failure
                 saveControls.style.display = 'none';
                 recordAgainBtn.style.display = 'block';
             }
