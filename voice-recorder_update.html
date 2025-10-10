@@ -430,7 +430,7 @@
             saveBtn.style.background = '#10b981';
         }
         
-        // recordAgainBtn.addEventListener('click', resetForNewRecording);
+        recordAgainBtn.addEventListener('click', resetForNewRecording);
 
 
         downloadBtn.addEventListener('click', () => {
@@ -449,7 +449,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            // saveControls.style.display = 'none';
+            saveControls.style.display = 'none';
             recordAgainBtn.style.display = 'block';
         });
 
@@ -500,7 +500,7 @@
                 saveBtn.textContent = 'Save to Drive';
                 saveBtn.disabled = false;
             } finally {
-                // saveControls.style.display = 'none';
+                saveControls.style.display = 'none';
                 recordAgainBtn.style.display = 'block';
             }
         });
