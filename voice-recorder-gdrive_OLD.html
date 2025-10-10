@@ -149,18 +149,6 @@
             box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
         }
 
-        #recordAgainBtn {
-            width: 100%;
-            background: #667eea;
-            color: white;
-        }
-        
-        #recordAgainBtn:hover:not(:disabled) {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
         #authBtn {
             width: 100%;
             background: #4285f4;
@@ -241,12 +229,18 @@
                 <button id="saveBtn">Save to Drive</button>
                 <button id="downloadBtn">Download</button>
             </div>
-            <button id="recordAgainBtn" style="display: none;">Record Another?</button>
         </div>
 
         <button id="authBtn">Connect Google Drive</button>
 
         <div class="info">
+            <!-- <strong>Setup Instructions:</strong>
+            1. Create a Google Cloud project at console.cloud.google.com<br>
+            2. Enable Google Drive API<br>
+            3. Create OAuth 2.0 credentials<br>
+            4. Add your Client ID below in the code (line with CLIENT_ID)<br>
+            5. Add authorized JavaScript origin (e.g., https://claude.site)<br><br>
+        -->
             <strong>Note:</strong> Recordings are in WAV format. You can download files locally without connecting to Google Drive.
         </div>
     </div>
@@ -257,6 +251,8 @@
         const CLIENT_ID = '1081331607659-mo7t5joo11ms7re971e15nvnar3vfok0.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
+        let mediaRecorder;
+        let audioChunks = [];
         let audioBlob;
         let startTime;
         let timerInterval;
@@ -276,8 +272,6 @@
         const audioPlayback = document.getElementById('audioPlayback');
         const audioContainer = document.getElementById('audioContainer');
         const filenameInput = document.getElementById('filename');
-        const recordAgainBtn = document.getElementById('recordAgainBtn');
-        const saveControls = document.querySelector('.save-controls');
 
         // Check if Client ID is configured
         if (!CLIENT_ID || CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
@@ -314,20 +308,22 @@
             const buffer = new ArrayBuffer(44 + audioData.length * 2);
             const view = new DataView(buffer);
 
+            // WAV header
             writeString(view, 0, 'RIFF');
             view.setUint32(4, 36 + audioData.length * 2, true);
             writeString(view, 8, 'WAVE');
             writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true);
+            view.setUint32(16, 16, true); // fmt chunk size
+            view.setUint16(20, 1, true); // PCM format
+            view.setUint16(22, 1, true); // mono
             view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true);
+            view.setUint32(28, sampleRate * 2, true); // byte rate
+            view.setUint16(32, 2, true); // block align
+            view.setUint16(34, 16, true); // bits per sample
             writeString(view, 36, 'data');
             view.setUint32(40, audioData.length * 2, true);
 
+            // Write audio data
             const volume = 1;
             let index = 44;
             for (let i = 0; i < audioData.length; i++) {
@@ -370,6 +366,7 @@
                 status.textContent = '🔴 Recording...';
                 status.classList.add('recording');
 
+                // Store stream for cleanup
                 startBtn.stream = stream;
             } catch (err) {
                 alert('Error accessing microphone: ' + err.message);
@@ -377,13 +374,16 @@
         });
 
         stopBtn.addEventListener('click', () => {
+            // Disconnect audio processing
             processor.disconnect();
             mediaStreamSource.disconnect();
             
+            // Stop all tracks
             if (startBtn.stream) {
                 startBtn.stream.getTracks().forEach(track => track.stop());
             }
 
+            // Merge all recorded chunks
             let totalLength = 0;
             recordingData.forEach(chunk => totalLength += chunk.length);
             const mergedData = new Float32Array(totalLength);
@@ -393,6 +393,7 @@
                 offset += chunk.length;
             });
 
+            // Create WAV blob
             audioBlob = exportWAV(mergedData, audioContext.sampleRate);
             const audioUrl = URL.createObjectURL(audioBlob);
             audioPlayback.src = audioUrl;
@@ -403,38 +404,14 @@
 
             clearInterval(timerInterval);
 
-            // **MODIFIED**: The start button is NOT re-enabled here.
-            // This prevents starting a new recording before resetting.
+            startBtn.disabled = false;
             stopBtn.disabled = true;
             status.textContent = 'Recording complete';
             status.classList.remove('recording');
-        });
-        
-        // **FIXED**: This function is now more robust and correctly resets the UI.
-        function resetForNewRecording() {
-            audioContainer.style.display = 'none';
-            recordAgainBtn.style.display = 'none';
-            saveControls.style.display = 'flex';
 
-            // Correctly clean up the old audio blob to prevent errors
-            if (audioPlayback.src) {
-                URL.revokeObjectURL(audioPlayback.src);
-            }
-            audioPlayback.src = '';
-            audioBlob = null;
-            
-            timer.textContent = '00:00';
-            status.textContent = 'Ready to record';
-            
-            // Explicitly reset all button states for the new recording
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Save to Drive';
-            saveBtn.style.background = '#10b981';
-        }
-        
-        recordAgainBtn.addEventListener('click', resetForNewRecording);
+            // Close audio context
+            audioContext.close();
+        });
 
         downloadBtn.addEventListener('click', () => {
             if (!audioBlob) {
@@ -451,9 +428,6 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
-            saveControls.style.display = 'none';
-            recordAgainBtn.style.display = 'block';
         });
 
         saveBtn.addEventListener('click', async () => {
@@ -491,23 +465,17 @@
                 });
 
                 if (response.ok) {
-                    await response.json();
+                    const result = await response.json();
                     alert('✓ Successfully saved to Google Drive!\nFilename: ' + filename);
                     saveBtn.textContent = '✓ Saved!';
                     saveBtn.style.background = '#059669';
-                    // NOTE: The button remains disabled after success, which is intended.
-                    // The reset function will properly re-enable it for the next recording.
                 } else {
                     throw new Error('Upload failed: ' + response.statusText);
                 }
             } catch (err) {
                 alert('Error saving to Google Drive: ' + err.message + '\n\nYou can use the Download button to save locally instead.');
                 saveBtn.textContent = 'Save to Drive';
-                saveBtn.disabled = false; // Re-enable only on failure
-            } finally {
-                // This block runs on success or failure
-                saveControls.style.display = 'none';
-                recordAgainBtn.style.display = 'block';
+                saveBtn.disabled = false;
             }
         });
 
