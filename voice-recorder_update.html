@@ -149,7 +149,6 @@
             box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
         }
 
-        /* */
         #recordAgainBtn {
             width: 100%;
             background: #667eea;
@@ -277,7 +276,11 @@
         const audioPlayback = document.getElementById('audioPlayback');
         const audioContainer = document.getElementById('audioContainer');
         const filenameInput = document.getElementById('filename');
-        const recordAgainBtn = document.getElementById('recordAgainBtn'); // const saveControls = document.querySelector('.save-controls'); // // Check if Client ID is configured
+        
+        // const recordAgainBtn = document.getElementById('recordAgainBtn');
+        const saveControls = document.querySelector('.save-controls');
+
+        // Check if Client ID is configured
         if (!CLIENT_ID || CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
             authBtn.textContent = '⚠️ Google Drive Not Configured';
             authBtn.style.background = '#6b7280';
@@ -403,13 +406,10 @@
 
             clearInterval(timerInterval);
 
-            startBtn.disabled = false;
+            // // It will be re-enabled by the reset function.
             stopBtn.disabled = true;
             status.textContent = 'Recording complete';
             status.classList.remove('recording');
-
-            // // This line was preventing a new recording from starting.
-            // By removing it, we can create a new AudioContext on the next "Start".
         });
         
         function resetForNewRecording() {
@@ -418,20 +418,19 @@
             saveControls.style.display = 'flex';
 
             audioPlayback.src = '';
-            URL.revokeObjectURL(audioPlayback.src); // Clean up memory
+            URL.revokeObjectURL(audioPlayback.src);
             audioBlob = null;
             
             timer.textContent = '00:00';
             status.textContent = 'Ready to record';
             
-            // Reset save button state
-            saveBtn.disabled = false;
+            // Reset button states
+            startBtn.disabled = false; // saveBtn.disabled = false;
             saveBtn.textContent = 'Save to Drive';
             saveBtn.style.background = '#10b981';
         }
         
         recordAgainBtn.addEventListener('click', resetForNewRecording);
-
 
         downloadBtn.addEventListener('click', () => {
             if (!audioBlob) {
