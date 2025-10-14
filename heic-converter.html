@@ -125,7 +125,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>HEIC/HEIF to JPG Converter</h1>
+        <h1>HEIC/HEIF to JPG Converter2</h1>
         <p>Convert Apple `.HEIC` and `.HEIF` photos to standard `.JPG` files right in your browser. Your images are never uploaded.</p>
 
         <div id="uploadArea">
@@ -161,13 +161,15 @@
                 return;
             }
             
-            // Basic validation
+           // Basic validation - check file type
             const fileName = file.name.toLowerCase();
-            if (!fileName.endsWith('.heic') && !fileName.endsWith('.heif')) {
+            const fileType = file.type.toLowerCase();
+            if (!fileName.endsWith('.heic') && !fileName.endsWith('.heif') && 
+                !fileType.includes('heic') && !fileType.includes('heif')) {
                 ui.status.textContent = 'Error: Please upload a .HEIC or .HEIF file.';
                 ui.status.className = 'error';
                 return;
-            }
+        }
 
             // Reset UI for new conversion
             ui.resultArea.style.display = 'none';
