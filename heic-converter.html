@@ -125,7 +125,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>HEIC to JPG Converter</h1>
+        <h1>HEIC to JPG Converter-iOSTEST!!!</h1>
         <p>Convert Apple '.HEIC' photos to standard '.JPG' image files. Conversion happens directly in your browser and your images are never uploaded or stored anywhere.</p>
         <p style="font-size: 0.9em; color: #f97316; margin-top: 10px;">Due to iOS browser limitations, this tool <strong> will not work on an iPhone/iPad</strong>. You must send the file to your computer and upload on a desktop browser.</p>
         <div id="uploadArea">
@@ -153,46 +153,65 @@
             downloadBtn: document.getElementById('downloadBtn'),
         };
 
-        // --- File Handling Logic ---
+        // --- File Handling Logic (Updated to handle iOS) ---
         function handleFile(file) {
             if (!file) {
                 ui.status.textContent = 'No file selected.';
                 ui.status.className = 'error';
                 return;
             }
-            
-           // Basic validation - check file type
-            const fileName = file.name.toLowerCase();
-            const fileType = file.type.toLowerCase();
-            if (!fileName.endsWith('.heic') && !fileName.endsWith('.heif') && 
-                !fileType.includes('heic') && !fileType.includes('heif')) {
-                ui.status.textContent = 'Error: Please upload a .HEIC or .HEIF file.';
-                ui.status.className = 'error';
-                return;
-        }
 
             // Reset UI for new conversion
             ui.resultArea.style.display = 'none';
-            ui.status.textContent = '⏳ Converting... Please wait.';
+            ui.status.textContent = '⏳ Processing... Please wait.';
             ui.status.className = 'processing';
 
-            // Use heic2any library to convert
+            const fileName = file.name.toLowerCase();
+            const fileType = file.type.toLowerCase();
+
+            // --- NEW LOGIC: Check if it's already a JPG (from iOS conversion) ---
+            if (fileType === "image/jpeg" || fileType === "image/jpg") {
+                console.log("File is already a JPG. Bypassing conversion.");
+                const imageUrl = URL.createObjectURL(file);
+                
+                // Update UI directly with the JPG file
+                ui.preview.src = imageUrl;
+                ui.downloadBtn.href = imageUrl;
+                // Ensure the download name has a .jpg extension
+                const newFileName = fileName.includes('.') ? fileName.replace(/\.[^/.]+$/, "") + ".jpg" : fileName + ".jpg";
+                ui.downloadBtn.download = newFileName;
+                
+                ui.status.textContent = '✅ Success! Your image is ready.';
+                ui.status.className = 'success';
+                ui.resultArea.style.display = 'block';
+                return; // Stop the function here
+            }
+
+            // --- ORIGINAL LOGIC: Proceed with HEIC conversion for non-JPG files ---
+            if (!fileName.endsWith('.heic') && !fileName.endsWith('.heif')) {
+                ui.status.textContent = 'Error: Please upload a .HEIC or compatible file.';
+                ui.status.className = 'error';
+                return;
+            }
+            
+            ui.status.textContent = '⏳ Converting HEIC file...';
+            ui.status.className = 'processing';
+            
             heic2any({
                 blob: file,
                 toType: "image/jpeg",
-                quality: 0.9, // Adjust quality from 0.0 to 1.0
+                quality: 0.9,
             })
             .then(conversionResult => {
                 const imageUrl = URL.createObjectURL(conversionResult);
                 
-                // Update UI with results
                 ui.preview.src = imageUrl;
                 ui.downloadBtn.href = imageUrl;
-                ui.downloadBtn.download = file.name.replace(/\.[^/.]+$/, "") + ".jpg"; // Set new filename
+                ui.downloadBtn.download = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
                 
                 ui.status.textContent = '✅ Success! Your image is ready.';
                 ui.status.className = 'success';
-                ui.resultArea.style.display = 'block'; // Show the result
+                ui.resultArea.style.display = 'block';
             })
             .catch(error => {
                 console.error(error);
