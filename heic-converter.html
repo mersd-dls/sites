@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HEIC to JPG Converter</title>
+    <title>HEIC/HEIF to JPG Converter</title>
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <style>
         /* General Setup - Inspired by the OCR App Style */
@@ -129,7 +129,7 @@
         <p>Convert Apple `.HEIC` photos to standard `.JPG` files right in your browser. Your images are never uploaded.</p>
         
         <div id="uploadArea">
-            <input type="file" id="fileInput" accept=".heic, .HEIC">
+            <input type="file" id="fileInput" accept=".heic, .HEIC, .heif, .HEIF">
             <p style="font-size: 1.2em; margin:0;">📂<br>Drag & Drop an Image or Click to Upload</p>
             <p style="font-size: 0.8em; color: #9ca3af; margin-top: 5px; margin-bottom: 0;">(Supports .HEIC files)</p>
         </div>
@@ -162,8 +162,9 @@
             }
             
             // Basic validation
-            if (!file.name.toLowerCase().endsWith('.heic')) {
-                ui.status.textContent = 'Error: Please upload a .HEIC file.';
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.heic') && !fileName.endsWith('.heif')) {
+                ui.status.textContent = 'Error: Please upload a .HEIC or .HEIF file.';
                 ui.status.className = 'error';
                 return;
             }
