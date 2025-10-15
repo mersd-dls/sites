@@ -38,6 +38,42 @@
         .header p {
             color: #6a737d;
         }
+        
+        /* Key/Legend for Tool Cards */
+        .tool-key {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 0;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex-wrap: wrap; /* For smaller screens */
+        }
+        .key-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .key-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .key-color.functional {
+            background-color: rgb(176, 252, 200);
+        }
+        .key-color.partially-functional {
+            background-color: rgb(250, 235, 166);
+        }
+        .key-color.work-in-progress {
+            background-color: rgb(255, 152, 152);
+        }
 
         /* Tool Grid Layout */
         #tool-grid {
@@ -49,7 +85,7 @@
 
         /* Tool Card Styling */
         .tool-card {
-            background: white;
+            background: rgb(176, 252, 200);
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer shadow */
@@ -59,7 +95,18 @@
             justify-content: space-between;
         }
         .tool-card-wip {
-            background: rgb(252, 203, 203);
+            background: rgb(250, 235, 166);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer shadow */
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; /* For button placement */
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .tool-card-soon {
+            background: rgb(255, 152, 152);
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer shadow */
@@ -73,6 +120,11 @@
             box-shadow: 0 6px 18px rgba(0,0,0,0.15);
         }
         .tool-card-wip:hover {
+            transform: translateY(-5px); /* Lift effect on hover */
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+
+        .tool-card-soon:hover {
             transform: translateY(-5px); /* Lift effect on hover */
             box-shadow: 0 6px 18px rgba(0,0,0,0.15);
         }
@@ -218,6 +270,18 @@
                 <p>A collection of simple tools and utilities for teachers and school staff. Select a tool below to get started. If you have an idea for a tool, please reach out to Chris Dwyer.</p>
             </div>
 
+            <div class="tool-key">
+                <div class="key-item">
+                    <span class="key-color functional"></span> Fully Functional
+                </div>
+                <div class="key-item">
+                    <span class="key-color partially-functional"></span> Partially Functional
+                </div>
+                <div class="key-item">
+                    <span class="key-color work-in-progress"></span> Work in Progress
+                </div>
+            </div>
+
             <div id="tool-grid">
                 
                 <div class="tool-card">
@@ -276,7 +340,7 @@
                 </div>
                  <div class="tool-card-wip">
                     <div>
-                        <div class="tool-title">OCR Visual Read Aloud <small><i><br>(work in progress)</i></small></div>
+                        <div class="tool-title">OCR Visual Read Aloud <small><i><br>(partially functional)</i></small></div>
                         <div class="tool-description">Scan images containing text and have it read aloud or click individual words to hear them spoken. <strong>Still being developed -</strong> currently only works with clear, high-contrast images containing only text.</div>
                     </div>
                      <div>
@@ -284,6 +348,13 @@
                         <a class="tutorial-link" data-video-src="videos/tut-coming-soon.mp4">How do I use this?</a>
                     </div>
                 </div>
+                <!-- <div class="tool-card-soon">
+                    <div>
+                        <div class="tool-title">Coming Soon</div>
+                        <div class="tool-description">...</div>
+                    </div>
+                     </div>
+                    -->
             </div>
         </div>
     </div>
