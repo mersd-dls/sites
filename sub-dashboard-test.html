@@ -136,7 +136,9 @@
 
     <script>
         // The URL of your published Google Sheet CSV
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4gdJMOXUriAL2DeZmJoknPPFuy6fcIjp8KcDsIJihkOCjJnTDyk1BqwfzeP6cAPRgxshCMViDkWIn/pub?gid=1705873615&single=true&output=csv';
+        const original_csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4gdJMOXUriAL2DeZmJoknPPFuy6fcIjp8KcDsIJihkOCjJnTDyk1BqwfzeP6cAPRgxshCMViDkWIn/pub?gid=1705873615&single=true&output=csv';
+        // We use a CORS proxy to bypass browser security restrictions
+        const CSV_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(original_csv_url)}`;
 
         // Helper function to parse CSV text into an array of objects
         function parseCSV(csvText) {
@@ -168,9 +170,14 @@
             const LOGO_HEADER = 'Link or Upload a Logo';
             const FEATURES_HEADER = 'What features does this product have?';
 
-            // Fetch data from the Google Sheet CSV URL
+            // Fetch data from the Google Sheet CSV URL via the proxy
             fetch(CSV_URL)
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) { // Check if the request was successful
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
                 .then(csvText => {
                     products = parseCSV(csvText);
                     populateFeaturesFilter(products);
@@ -226,7 +233,7 @@
                 const featureQuery = featureFilter.value;
 
                 if (nameQuery) {
-                    filteredProducts = filteredProducts.filter(p => p[NAME_HEADER].toLowerCase().includes(nameQuery));
+                    filteredProducts = filteredProducts.filter(p => p[NAME_HEADER] && p[NAME_HEADER].toLowerCase().includes(nameQuery));
                 }
                 if (featureQuery) {
                     filteredProducts = filteredProducts.filter(p => p[FEATURES_HEADER] && p[FEATURES_HEADER].includes(featureQuery));
@@ -256,6 +263,3 @@
             featureFilter.addEventListener('change', filterProducts);
         });
     </script>
-
-</body>
-</html>
