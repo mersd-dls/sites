@@ -138,22 +138,36 @@
         // The URL of your published Google Sheet CSV
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4gdJMOXUriAL2DeZmJoknPPFuy6fcIjp8KcDsIJihkOCjJnTDyk1BqwfzeP6cAPRgxshCMViDkWIn/pub?gid=1705873615&single=true&output=csv';
 
-        // Helper function to parse CSV text into an array of objects
-        function parseCSV(csvText) {
-            const lines = csvText.split(/\r?\n/);
-            const headers = lines[0].split(',');
-            const data = [];
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i]) continue;
-                const obj = {};
-                const currentline = lines[i].split(',');
-                for (let j = 0; j < headers.length; j++) {
-                    obj[headers[j]] = currentline[j];
-                }
-                data.push(obj);
+// Helper function to parse CSV text into an array of objects
+// A more robust CSV parser that handles quoted fields
+function parseCSV(csvText) {
+    const lines = csvText.split(/\r?\n/);
+    const headers = lines[0].split(',');
+    const data = [];
+
+    // Regex to correctly split CSV lines, handling quoted fields
+    const regex = /(".*?"|[^",]+)(?=\s*,|\s*$)/g;
+
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i]) continue;
+
+        const obj = {};
+        const currentline = lines[i].match(regex);
+
+        // If a line can't be parsed, skip it
+        if (!currentline) continue;
+
+        for (let j = 0; j < headers.length; j++) {
+            if (currentline[j]) {
+                // Remove leading/trailing quotes and trim whitespace
+                let value = currentline[j].replace(/^"|"$/g, '').trim();
+                obj[headers[j]] = value;
             }
-            return data;
         }
+        data.push(obj);
+    }
+    return data;
+}
 
         // Main script execution
         document.addEventListener('DOMContentLoaded', () => {
@@ -164,7 +178,7 @@
             
             // These are your exact column headers from the Google Form/Sheet
             const NAME_HEADER = 'Product Name';
-            const DESC_HEADER = 'Product Description';
+            const DESC_HEADER = 'Please provide a brief description';
             const LOGO_HEADER = 'Add a url for the product logo (must be direct link to image file)';
             const FEATURES_HEADER = 'Features (check all that apply)';
 
