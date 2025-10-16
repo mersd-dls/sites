@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Subscription Dashboard</title>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        .filters {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            max-width: 800px;
+        }
+        .filters input, .filters select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            min-width: 200px;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .product-card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: box-shadow 0.3s, transform 0.3s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .product-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+        }
+        .product-card img {
+            max-width: 100px;
+            max-height: 80px;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+        .product-card h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+            text-align: center;
+        }
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+        .modal-content img {
+            max-width: 150px;
+            display: block;
+            margin: 0 auto 15px;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Teacher Subscription Dashboard</h1>
+    <div class="filters">
+      <input type="text" id="name-filter" placeholder="Search by name...">
+      <select id="feature-filter">
+        <option value="">Filter by Feature</option>
+      </select>
+    </div>
+    <div id="dashboard-container" class="dashboard"></div>
+
+    <div id="product-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <img id="modal-logo" src="" alt="Product Logo">
+        <h2 id="modal-title"></h2>
+        <p id="modal-description"></p>
+        <p><strong>Features:</strong> <span id="modal-features"></span></p>
+      </div>
+    </div>
+
+    <script>
+        // The URL of your published Google Sheet CSV
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4gdJMOXUriAL2DeZmJoknPPFuy6fcIjp8KcDsIJihkOCjJnTDyk1BqwfzeP6cAPRgxshCMViDkWIn/pub?gid=1705873615&single=true&output=csv';
+
+        // Helper function to parse CSV text into an array of objects
+        function parseCSV(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            const headers = lines[0].split(',');
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i]) continue;
+                const obj = {};
+                const currentline = lines[i].split(',');
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j]] = currentline[j];
+                }
+                data.push(obj);
+            }
+            return data;
+        }
+
+        // Main script execution
+        document.addEventListener('DOMContentLoaded', () => {
+            const dashboardContainer = document.getElementById('dashboard-container');
+            const nameFilter = document.getElementById('name-filter');
+            const featureFilter = document.getElementById('feature-filter');
+            let products = [];
+            
+            // These are your exact column headers from the Google Form/Sheet
+            const NAME_HEADER = 'Product Name';
+            const DESC_HEADER = 'Please provide a brief description';
+            const LOGO_HEADER = 'Link or Upload a Logo';
+            const FEATURES_HEADER = 'What features does this product have?';
+
+            // Fetch data from the Google Sheet CSV URL
+            fetch(CSV_URL)
+                .then(response => response.text())
+                .then(csvText => {
+                    products = parseCSV(csvText);
+                    populateFeaturesFilter(products);
+                    displayProducts(products);
+                }).catch(error => {
+                    console.error("Failed to fetch or parse CSV:", error);
+                    dashboardContainer.innerHTML = "<p>Error loading data. Please check the CSV URL and your browser's console.</p>";
+                });
+
+            function populateFeaturesFilter(products) {
+                const features = new Set();
+                products.forEach(product => {
+                    if (product[FEATURES_HEADER]) {
+                        // The feature string might have quotes, so we remove them
+                        const cleanedFeatures = product[FEATURES_HEADER].replace(/"/g, '');
+                        cleanedFeatures.split(',').forEach(feature => {
+                            const trimmedFeature = feature.trim();
+                            if (trimmedFeature) features.add(trimmedFeature);
+                        });
+                    }
+                });
+                
+                const sortedFeatures = Array.from(features).sort();
+                sortedFeatures.forEach(feature => {
+                    const option = document.createElement('option');
+                    option.value = feature;
+                    option.textContent = feature;
+                    featureFilter.appendChild(option);
+                });
+            }
+
+            function displayProducts(productsToDisplay) {
+                dashboardContainer.innerHTML = '';
+                productsToDisplay.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    
+                    const logoUrl = product[LOGO_HEADER] || 'https://via.placeholder.com/100';
+                    const productName = product[NAME_HEADER] || 'No Name';
+
+                    card.innerHTML = `
+                        <img src="${logoUrl}" alt="${productName} Logo" onerror="this.onerror=null;this.src='https://via.placeholder.com/100';">
+                        <h3>${productName}</h3>
+                    `;
+                    card.addEventListener('click', () => openModal(product));
+                    dashboardContainer.appendChild(card);
+                });
+            }
+
+            function filterProducts() {
+                let filteredProducts = products;
+                const nameQuery = nameFilter.value.toLowerCase();
+                const featureQuery = featureFilter.value;
+
+                if (nameQuery) {
+                    filteredProducts = filteredProducts.filter(p => p[NAME_HEADER].toLowerCase().includes(nameQuery));
+                }
+                if (featureQuery) {
+                    filteredProducts = filteredProducts.filter(p => p[FEATURES_HEADER] && p[FEATURES_HEADER].includes(featureQuery));
+                }
+                displayProducts(filteredProducts);
+            }
+
+            // Modal functionality
+            const modal = document.getElementById('product-modal');
+            const closeButton = document.querySelector('.close-button');
+
+            function openModal(product) {
+                document.getElementById('modal-title').textContent = product[NAME_HEADER];
+                document.getElementById('modal-logo').src = product[LOGO_HEADER] || 'https://via.placeholder.com/150';
+                document.getElementById('modal-description').textContent = product[DESC_HEADER];
+                // Clean up quotes from the feature list for display
+                document.getElementById('modal-features').textContent = (product[FEATURES_HEADER] || '').replace(/"/g, '');
+                modal.style.display = 'block';
+            }
+
+            closeButton.onclick = () => modal.style.display = 'none';
+            window.onclick = (event) => {
+                if (event.target == modal) modal.style.display = 'none';
+            };
+            
+            nameFilter.addEventListener('input', filterProducts);
+            featureFilter.addEventListener('change', filterProducts);
+        });
+    </script>
+
+</body>
+</html>
