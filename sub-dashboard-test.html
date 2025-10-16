@@ -136,9 +136,7 @@
 
     <script>
         // The URL of your published Google Sheet CSV
-        const original_csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4gdJMOXUriAL2DeZmJoknPPFuy6fcIjp8KcDsIJihkOCjJnTDyk1BqwfzeP6cAPRgxshCMViDkWIn/pub?gid=1705873615&single=true&output=csv';
-        // We use a CORS proxy to bypass browser security restrictions
-        const CSV_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(original_csv_url)}`;
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4gdJMOXUriAL2DeZmJoknPPFuy6fcIjp8KcDsIJihkOCjJnTDyk1BqwfzeP6cAPRgxshCMViDkWIn/pub?gid=1705873615&single=true&output=csv';
 
         // Helper function to parse CSV text into an array of objects
         function parseCSV(csvText) {
@@ -166,18 +164,13 @@
             
             // These are your exact column headers from the Google Form/Sheet
             const NAME_HEADER = 'Product Name';
-            const DESC_HEADER = 'Please provide a brief description';
-            const LOGO_HEADER = 'Link or Upload a Logo';
-            const FEATURES_HEADER = 'What features does this product have?';
+            const DESC_HEADER = 'Product Description';
+            const LOGO_HEADER = 'Add a url for the product logo (must be direct link to image file)';
+            const FEATURES_HEADER = 'Features (check all that apply)';
 
-            // Fetch data from the Google Sheet CSV URL via the proxy
+            // Fetch data from the Google Sheet CSV URL
             fetch(CSV_URL)
-                .then(response => {
-                    if (!response.ok) { // Check if the request was successful
-                        throw new Error(`Network response was not ok: ${response.statusText}`);
-                    }
-                    return response.text();
-                })
+                .then(response => response.text())
                 .then(csvText => {
                     products = parseCSV(csvText);
                     populateFeaturesFilter(products);
@@ -233,7 +226,7 @@
                 const featureQuery = featureFilter.value;
 
                 if (nameQuery) {
-                    filteredProducts = filteredProducts.filter(p => p[NAME_HEADER] && p[NAME_HEADER].toLowerCase().includes(nameQuery));
+                    filteredProducts = filteredProducts.filter(p => p[NAME_HEADER].toLowerCase().includes(nameQuery));
                 }
                 if (featureQuery) {
                     filteredProducts = filteredProducts.filter(p => p[FEATURES_HEADER] && p[FEATURES_HEADER].includes(featureQuery));
@@ -263,3 +256,6 @@
             featureFilter.addEventListener('change', filterProducts);
         });
     </script>
+
+</body>
+</html>
