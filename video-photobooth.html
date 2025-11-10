@@ -75,7 +75,7 @@
             font-size: 32px;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* Reduced margin */
             color: #667eea;
             font-variant-numeric: tabular-nums;
         }
@@ -83,6 +83,16 @@
         .timer.warning {
             color: #ef4444;
             animation: pulse 1s infinite;
+        }
+
+        /* NEW: VU Meter Styles */
+        #vuMeter {
+            width: 100%;
+            height: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden; /* Ensure gradient stays within rounded corners */
         }
 
         .video-container {
@@ -234,6 +244,9 @@
         <div class="status" id="status">Ready to record</div>
         <div class="timer" id="timer">00:00 / 00:30</div>
 
+        <!-- NEW: VU Meter Canvas -->
+        <canvas id="vuMeter" width="620" height="10"></canvas>
+
         <div class="video-container">
             <video id="videoPreview" autoplay muted playsinline></video>
         </div>
@@ -281,6 +294,10 @@
         let accessToken = null;
         let recordingTimeout;
 
+        // NEW: VU Meter variables
+        let audioContext, analyser, dataArray, vuCanvas, vuCanvasCtx, drawVisual;
+        let currentVuLevel = 0; // NEW: Added for smoothing
+
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const submitBtn = document.getElementById('submitBtn');
@@ -292,6 +309,10 @@
         const nameInput = document.getElementById('nameInput');
         const recordingControls = document.getElementById('recordingControls');
         const reviewContainer = document.getElementById('reviewContainer');
+        
+        // NEW: Get VU Meter canvas
+        vuCanvas = document.getElementById('vuMeter');
+        vuCanvasCtx = vuCanvas.getContext('2d');
 
         // Initialize camera on load
         async function initCamera() {
@@ -301,6 +322,19 @@
                     audio: true 
                 });
                 videoPreview.srcObject = stream;
+
+                // NEW: Set up audio analyser
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512; // Controls data resolution
+                const bufferLength = analyser.fftSize;
+                dataArray = new Uint8Array(bufferLength);
+                source.connect(analyser); // Connect the stream to the analyser
+
+                // NEW: Start the VU meter right away
+                drawVuMeter();
+
             } catch (err) {
                 alert('Error accessing camera: ' + err.message);
                 status.textContent = '❌ Camera access denied';
@@ -308,6 +342,42 @@
         }
 
         initCamera();
+
+        // NEW: Function to draw the VU meter
+        function drawVuMeter() {
+            // Request animation frame to keep drawing
+            drawVisual = requestAnimationFrame(drawVuMeter);
+
+            // Get audio data
+            analyser.getByteTimeDomainData(dataArray);
+
+            // Calculate RMS (Root Mean Square) to get a good volume level
+            let sumSquares = 0.0;
+            for (let i = 0; i < dataArray.length; i++) {
+                // dataArray values are 0-255, with 128 as the center (0 amplitude)
+                const val = (dataArray[i] - 128) / 128.0; // Normalize to -1.0 to 1.0
+                sumSquares += val * val;
+            }
+            
+            const rms = Math.sqrt(sumSquares / dataArray.length);
+            const maxLevel = 0.5; // Adjust this "max" level to change sensitivity
+            let targetLevel = Math.min(1, rms / maxLevel) * vuCanvas.width;
+            
+            // NEW: Apply smoothing
+            currentVuLevel += (targetLevel - currentVuLevel) * 0.3; // Smoothing factor (0.3)
+
+            // Clear canvas
+            vuCanvasCtx.clearRect(0, 0, vuCanvas.width, vuCanvas.height);
+
+            // Create a color gradient for the bar
+            const gradient = vuCanvasCtx.createLinearGradient(0, 0, vuCanvas.width, 0);
+            gradient.addColorStop(0, '#10b981'); // Green
+            gradient.addColorStop(0.6, '#f59e0b'); // Yellow
+            gradient.addColorStop(0.9, '#ef4444'); // Red
+
+            vuCanvasCtx.fillStyle = gradient;
+            vuCanvasCtx.fillRect(0, 0, currentVuLevel, vuCanvas.height); // Use smoothed level
+        }
 
         // Initialize Google Sign-In
         function initGoogleAuth() {
@@ -351,6 +421,11 @@
         stopBtn.addEventListener('click', stopRecording);
 
         function startRecording() {
+            // NEW: Resume audio context if it was suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
             recordedChunks = [];
             
             mediaRecorder = new MediaRecorder(stream, {
@@ -382,6 +457,10 @@
             };
 
             mediaRecorder.start();
+            
+            // NEW: Start drawing the VU meter (REMOVED - now starts in initCamera)
+            // drawVuMeter();
+
             startTime = Date.now();
             timerInterval = setInterval(updateTimer, 100);
 
@@ -403,6 +482,12 @@
                 mediaRecorder.stop();
                 clearInterval(timerInterval);
                 clearTimeout(recordingTimeout);
+
+                // NEW: Stop drawing VU meter and clear it (REMOVED - let it keep running)
+                // cancelAnimationFrame(drawVisual);
+                // if (vuCanvasCtx) {
+                //     vuCanvasCtx.clearRect(0, 0, vuCanvas.width, vuCanvas.height);
+                // }
             }
         }
 
@@ -439,6 +524,11 @@
             timer.classList.remove('warning');
             status.textContent = 'Ready to record';
             
+            // NEW: Clear the VU meter on retake (REMOVED - let it keep running)
+            // if (vuCanvasCtx) {
+            //     vuCanvasCtx.clearRect(0, 0, vuCanvas.width, vuCanvas.height);
+            // }
+
             startBtn.disabled = false;
             stopBtn.disabled = true;
             submitBtn.disabled = false;
