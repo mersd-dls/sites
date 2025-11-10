@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Photobooth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .status.recording {
+            background: #fee;
+            color: #c33;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status.countdown {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .timer {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #667eea;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer.warning {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            max-height: 400px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #startBtn {
+            background: #667eea;
+            color: white;
+        }
+
+        #startBtn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #stopBtn {
+            background: #ef4444;
+            color: white;
+        }
+
+        #stopBtn:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        #retakeBtn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        #retakeBtn:hover:not(:disabled) {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        #submitBtn {
+            background: #10b981;
+            color: white;
+        }
+
+        #submitBtn:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        #authBtn {
+            width: 100%;
+            background: #4285f4;
+            color: white;
+        }
+
+        #authBtn:hover:not(:disabled) {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.4);
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info {
+            background: #e0e7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #4c51bf;
+            line-height: 1.6;
+        }
+
+        .info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .format-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        #reviewContainer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 Video Photobooth</h1>
+        <p class="subtitle">Record a 30-second video message <span class="format-badge">WebM Format</span></p>
+
+        <div class="status" id="status">Ready to record</div>
+        <div class="timer" id="timer">00:00 / 00:30</div>
+
+        <div class="video-container">
+            <video id="videoPreview" autoplay muted playsinline></video>
+        </div>
+
+        <div id="recordingControls">
+            <div class="controls">
+                <button id="startBtn">Start Recording</button>
+            </div>
+        </div>
+
+        <div id="reviewContainer">
+            <input type="text" id="nameInput" class="name-input" placeholder="Enter your name (e.g., John Smith)">
+            <div class="controls">
+                <button id="retakeBtn">Retake</button>
+                <button id="submitBtn">Submit Video</button>
+            </div>
+        </div>
+
+        <button id="authBtn">Connect Google Drive (Admin)</button>
+
+        <div class="info">
+            <strong>Instructions:</strong>
+            1. Click "Start Recording" and get ready!<br>
+            2. After a 3-2-1 countdown, recording will begin automatically<br>
+            3. Recording stops automatically after 30 seconds<br>
+            4. Review your video and retake if needed<br>
+            5. Enter your name and submit!
+        </div>
+    </div>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // ⚠️ REPLACE WITH YOUR GOOGLE CLIENT ID
+        const CLIENT_ID = '1081331607659-mo7t5joo11ms7re971e15nvnar3vfok0.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const MAX_RECORDING_TIME = 30; // seconds
+
+        let mediaRecorder;
+        let recordedChunks = [];
+        let videoBlob;
+        let stream;
+        let startTime;
+        let timerInterval;
+        let accessToken = null;
+        let recordingTimeout;
+
+        const startBtn = document.getElementById('startBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const authBtn = document.getElementById('authBtn');
+        const status = document.getElementById('status');
+        const timer = document.getElementById('timer');
+        const videoPreview = document.getElementById('videoPreview');
+        const nameInput = document.getElementById('nameInput');
+        const recordingControls = document.getElementById('recordingControls');
+        const reviewContainer = document.getElementById('reviewContainer');
+
+        // Initialize camera on load
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 }, 
+                    audio: true 
+                });
+                videoPreview.srcObject = stream;
+            } catch (err) {
+                alert('Error accessing camera: ' + err.message);
+                status.textContent = '❌ Camera access denied';
+            }
+        }
+
+        initCamera();
+
+        // Initialize Google Sign-In
+        function initGoogleAuth() {
+            if (!CLIENT_ID || CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
+                alert('Google Drive is not configured. Please add your Client ID to the code.');
+                return;
+            }
+
+            google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: (response) => {
+                    if (response.access_token) {
+                        accessToken = response.access_token;
+                        authBtn.textContent = '✓ Connected to Google Drive';
+                        authBtn.style.background = '#10b981';
+                        authBtn.disabled = true;
+                    }
+                }
+            }).requestAccessToken();
+        }
+
+        authBtn.addEventListener('click', initGoogleAuth);
+
+        // Countdown before recording
+        async function startCountdown() {
+            startBtn.disabled = true;
+            status.classList.add('countdown');
+            
+            for (let i = 3; i > 0; i--) {
+                status.textContent = i;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            status.classList.remove('countdown');
+            startRecording();
+        }
+
+        startBtn.addEventListener('click', startCountdown);
+
+        function startRecording() {
+            recordedChunks = [];
+            
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp8,opus'
+            });
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoUrl = URL.createObjectURL(videoBlob);
+                videoPreview.srcObject = null;
+                videoPreview.src = videoUrl;
+                videoPreview.muted = false;
+                videoPreview.controls = true;
+                
+                recordingControls.style.display = 'none';
+                reviewContainer.style.display = 'block';
+                
+                status.textContent = '✓ Recording complete - Review your video';
+                status.classList.remove('recording');
+            };
+
+            mediaRecorder.start();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 100);
+
+            status.textContent = '🔴 Recording...';
+            status.classList.add('recording');
+
+            // Auto-stop after 30 seconds
+            recordingTimeout = setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    stopRecording();
+                }
+            }, MAX_RECORDING_TIME * 1000);
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                clearInterval(timerInterval);
+                clearTimeout(recordingTimeout);
+            }
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const remaining = MAX_RECORDING_TIME - elapsed;
+            
+            const elapsedMin = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const elapsedSec = (elapsed % 60).toString().padStart(2, '0');
+            const totalMin = Math.floor(MAX_RECORDING_TIME / 60).toString().padStart(2, '0');
+            const totalSec = (MAX_RECORDING_TIME % 60).toString().padStart(2, '0');
+            
+            timer.textContent = `${elapsedMin}:${elapsedSec} / ${totalMin}:${totalSec}`;
+            
+            // Warning when less than 10 seconds remaining
+            if (remaining <= 10) {
+                timer.classList.add('warning');
+            } else {
+                timer.classList.remove('warning');
+            }
+        }
+
+        retakeBtn.addEventListener('click', async () => {
+            reviewContainer.style.display = 'none';
+            recordingControls.style.display = 'block';
+            
+            videoPreview.src = '';
+            videoPreview.controls = false;
+            videoPreview.muted = true;
+            videoPreview.srcObject = stream;
+            
+            nameInput.value = '';
+            timer.textContent = '00:00 / 00:30';
+            timer.classList.remove('warning');
+            status.textContent = 'Ready to record';
+            
+            startBtn.disabled = false;
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Video';
+            submitBtn.style.background = '#10b981';
+        });
+
+        submitBtn.addEventListener('click', async () => {
+            if (!accessToken) {
+                alert('Please connect to Google Drive first using the admin button below!');
+                return;
+            }
+
+            if (!videoBlob) {
+                alert('No video to submit!');
+                return;
+            }
+
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Please enter your name!');
+                nameInput.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+
+            try {
+                const filename = `${name}.webm`;
+                
+                const metadata = {
+                    name: filename,
+                    mimeType: 'video/webm'
+                };
+
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', videoBlob);
+
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: form
+                });
+
+                if (response.ok) {
+                    await response.json();
+                    alert('✅ Video submitted successfully!\nThank you, ' + name + '!');
+                    submitBtn.textContent = '✓ Submitted!';
+                    submitBtn.style.background = '#059669';
+                    
+                    // Reset for next person after a brief delay
+                    setTimeout(() => {
+                        retakeBtn.click();
+                    }, 2000);
+                } else {
+                    throw new Error('Upload failed: ' + response.statusText);
+                }
+            } catch (err) {
+                alert('Error submitting video: ' + err.message);
+                submitBtn.textContent = 'Submit Video';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
