@@ -80,14 +80,6 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* We remove the .warning class style, as it's no longer needed */
-        /* .timer.warning {
-            color: #ef4444;
-            animation: pulse 1s infinite;
-        } 
-        */
-
-        /* NEW: VU Meter Styles */
         #vuMeter {
             width: 100%;
             height: 10px;
@@ -206,6 +198,17 @@
             outline: none;
             border-color: #667eea;
         }
+        
+        /* NEW: Style for the error message */
+        .error-message {
+            color: #ef4444; /* Red */
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            margin-top: -10px; /* Pull it up closer to the input */
+            margin-bottom: 12px;
+            display: none; /* Hidden by default */
+        }
 
         .info {
             background: #e0e7ff;
@@ -241,14 +244,11 @@
 <body>
     <div class="container">
         <h1>🎥 Video Photobooth</h1>
-        <!-- CHANGED: Updated subtitle to reflect 15-minute limit -->
         <p class="subtitle">Record up to 15-minutes of video.<span class="format-badge">WebM Format</span></p>
 
         <div class="status" id="status">Ready to record</div>
-        <!-- CHANGED: Updated default timer display -->
         <div class="timer" id="timer">00:00</div>
 
-        <!-- NEW: VU Meter Canvas -->
         <canvas id="vuMeter" width="620" height="10"></canvas>
 
         <div class="video-container">
@@ -264,9 +264,11 @@
 
         <div id="reviewContainer">
             <input type="text" id="nameInput" class="name-input" placeholder="Enter your name (e.g., John Smith)">
+            <!-- NEW: Error message div -->
+            <div id="nameError" class="error-message"></div>
             <div class="controls">
                 <button id="retakeBtn">Retake</button>
-                <button id="submitBtn">Submit Video</button>
+                <button id="submitBtn">Save to Drive</button>
             </div>
         </div>
 
@@ -278,7 +280,6 @@
             2. Connect to Google Drive using the blue button<br>
             3. Click "Start Recording" and get ready!<br>
             4. After a 3-2-1 countdown, recording will begin automatically<br>
-            <!-- CHANGED: Updated instruction text for 15-minute limit -->
             5. Recording stops automatically after 15 minutes<br>
             6. Review your video and retake if needed<br>
             7. Enter your name and save to drive!
@@ -291,8 +292,7 @@
         const CLIENT_ID = '1081331607659-mo7t5joo11ms7re971e15nvnar3vfok0.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         
-        // CHANGED: Max recording time is now 15 minutes (900 seconds)
-        const MAX_RECORDING_TIME = 900; // seconds
+        const MAX_RECORDING_TIME = 900; // 15 minutes in seconds
 
         let mediaRecorder;
         let recordedChunks = [];
@@ -303,9 +303,8 @@
         let accessToken = null;
         let recordingTimeout;
 
-        // NEW: VU Meter variables
         let audioContext, analyser, dataArray, vuCanvas, vuCanvasCtx, drawVisual;
-        let currentVuLevel = 0; // NEW: Added for smoothing
+        let currentVuLevel = 0; 
 
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -318,12 +317,12 @@
         const nameInput = document.getElementById('nameInput');
         const recordingControls = document.getElementById('recordingControls');
         const reviewContainer = document.getElementById('reviewContainer');
+        // NEW: Get the error message element
+        const nameError = document.getElementById('nameError');
         
-        // NEW: Get VU Meter canvas
         vuCanvas = document.getElementById('vuMeter');
         vuCanvasCtx = vuCanvas.getContext('2d');
 
-        // Initialize camera on load
         async function initCamera() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
@@ -332,20 +331,17 @@
                 });
                 videoPreview.srcObject = stream;
 
-                // NEW: Set up audio analyser
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioContext.createMediaStreamSource(stream);
                 analyser = audioContext.createAnalyser();
-                analyser.fftSize = 512; // Controls data resolution
+                analyser.fftSize = 512;
                 const bufferLength = analyser.fftSize;
                 dataArray = new Uint8Array(bufferLength);
-                source.connect(analyser); // Connect the stream to the analyser
+                source.connect(analyser); 
 
-                // NEW: Start the VU meter right away
                 drawVuMeter();
 
             } catch (err) {
-                // Using console.error instead of alert for better debugging
                 console.error('Error accessing camera: ' + err.message);
                 status.textContent = '❌ Camera access denied';
             }
@@ -353,43 +349,33 @@
 
         initCamera();
 
-        // NEW: Function to draw the VU meter
         function drawVuMeter() {
-            // Request animation frame to keep drawing
             drawVisual = requestAnimationFrame(drawVuMeter);
-
-            // Get audio data
             analyser.getByteTimeDomainData(dataArray);
 
-            // Calculate RMS (Root Mean Square) to get a good volume level
             let sumSquares = 0.0;
             for (let i = 0; i < dataArray.length; i++) {
-                // dataArray values are 0-255, with 128 as the center (0 amplitude)
-                const val = (dataArray[i] - 128) / 128.0; // Normalize to -1.0 to 1.0
+                const val = (dataArray[i] - 128) / 128.0; 
                 sumSquares += val * val;
             }
             
             const rms = Math.sqrt(sumSquares / dataArray.length);
-            const maxLevel = 0.5; // Adjust this "max" level to change sensitivity
+            const maxLevel = 0.5; 
             let targetLevel = Math.min(1, rms / maxLevel) * vuCanvas.width;
             
-            // NEW: Apply smoothing
-            currentVuLevel += (targetLevel - currentVuLevel) * 0.3; // Smoothing factor (0.3)
+            currentVuLevel += (targetLevel - currentVuLevel) * 0.3; 
 
-            // Clear canvas
             vuCanvasCtx.clearRect(0, 0, vuCanvas.width, vuCanvas.height);
 
-            // Create a color gradient for the bar
             const gradient = vuCanvasCtx.createLinearGradient(0, 0, vuCanvas.width, 0);
             gradient.addColorStop(0, '#10b981'); // Green
             gradient.addColorStop(0.6, '#f59e0b'); // Yellow
             gradient.addColorStop(0.9, '#ef4444'); // Red
 
             vuCanvasCtx.fillStyle = gradient;
-            vuCanvasCtx.fillRect(0, 0, currentVuLevel, vuCanvas.height); // Use smoothed level
+            vuCanvasCtx.fillRect(0, 0, currentVuLevel, vuCanvas.height);
         }
 
-        // Initialize Google Sign-In
         function initGoogleAuth() {
             if (!CLIENT_ID || CLIENT_ID.startsWith('1081331607659-')) {
                 console.warn('Using demo CLIENT_ID. Google Drive upload will work for this session.');
@@ -411,7 +397,6 @@
 
         authBtn.addEventListener('click', initGoogleAuth);
 
-        // Countdown before recording
         async function startCountdown() {
             startBtn.disabled = true;
             status.classList.add('countdown');
@@ -430,7 +415,6 @@
         stopBtn.addEventListener('click', stopRecording);
 
         function startRecording() {
-            // NEW: Resume audio context if it was suspended
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume();
             }
@@ -475,7 +459,6 @@
             
             stopBtn.disabled = false;
 
-            // Auto-stop after 15 minutes (900 seconds)
             recordingTimeout = setTimeout(() => {
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
                     stopRecording();
@@ -491,17 +474,13 @@
             }
         }
 
-        // CHANGED: This function now only shows a count-up timer.
         function updateTimer() {
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
             
             const elapsedMin = Math.floor(elapsed / 60).toString().padStart(2, '0');
             const elapsedSec = (elapsed % 60).toString().padStart(2, '0');
             
-            // Only display the elapsed time (count-up)
             timer.textContent = `${elapsedMin}:${elapsedSec}`;
-            
-            // REMOVED: The warning logic is no longer needed.
             timer.classList.remove('warning');
         }
 
@@ -515,7 +494,10 @@
             videoPreview.srcObject = stream;
             
             nameInput.value = '';
-            // CHANGED: Reset timer to the count-up start position
+            // NEW: Hide error message on retake
+            nameError.style.display = 'none';
+            nameInput.style.borderColor = '#e5e7eb'; // Reset border
+            
             timer.textContent = '00:00';
             timer.classList.remove('warning');
             status.textContent = 'Ready to record';
@@ -529,9 +511,7 @@
 
         submitBtn.addEventListener('click', async () => {
             if (!accessToken) {
-                // Using console.warn for non-blocking info
                 console.warn('Please connect to Google Drive first using the admin button below!');
-                // Re-trigger auth flow for user
                 initGoogleAuth();
                 return;
             }
@@ -542,14 +522,19 @@
             }
 
             const name = nameInput.value.trim();
+            // NEW: Hide error message on every new submit attempt
+            nameError.style.display = 'none';
+
             if (!name) {
-                // Simple UI feedback instead of alert
+                // NEW: Show the clear error message instead of just border
                 nameInput.style.borderColor = '#ef4444';
-                nameInput.placeholder = 'Please enter your name!';
+                nameError.textContent = 'Please enter your name to save the video.';
+                nameError.style.display = 'block'; // Show the error
                 nameInput.focus();
                 return;
             }
-            // Reset border if name is entered
+            
+            // Reset border if name was entered (it's hidden by the 'input' listener, but good to have)
             nameInput.style.borderColor = '#e5e7eb';
 
 
@@ -568,7 +553,7 @@
                 form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                 form.append('file', videoBlob);
 
-                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                const response = await fetch('https.www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Bearer ' + accessToken
@@ -579,7 +564,6 @@
                 if (response.ok) {
                     await response.json();
                     
-                    // Use a more modern, non-blocking notification if possible
                     status.textContent = `✓ Saved successfully, ${name}!`;
                     status.style.background = '#dcfce7'; // Green
                     status.style.color = '#166534';
@@ -587,10 +571,8 @@
                     submitBtn.textContent = '✓ Saved!';
                     submitBtn.style.background = '#059669';
                     
-                    // Reset for next person after a brief delay
                     setTimeout(() => {
                         retakeBtn.click();
-                        // Reset status
                         status.style.background = '#f0f0f0';
                         status.style.color = '#666';
                     }, 3000);
@@ -607,10 +589,12 @@
             }
         });
 
-        // Also reset name input border on focus
-        nameInput.addEventListener('focus', () => {
-            nameInput.style.borderColor = '#667eea';
-            nameInput.placeholder = 'Enter your name (e.g., John Smith)';
+        // CHANGED: Use the 'input' event to reset the error state as the user types
+        nameInput.addEventListener('input', () => {
+            if (nameInput.value.trim() !== '') {
+                nameInput.style.borderColor = '#e5e7eb'; // Reset border
+                nameError.style.display = 'none'; // Hide error
+            }
         });
 
     </script>
