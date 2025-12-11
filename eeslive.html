@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Concert Live Stream</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffe7e7; /* Dark background for cinema feel */
+            background-image: url(images/snowflakes.png);
+            background-size: 12%;
+            color: white;
+            text-align: center;
+        }
+
+        .header {
+            padding: 20px;
+            background-color: #02644f; /* Change this to your school color */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #ccc;
+        }
+
+        /* Responsive Video Container */
+        .video-container {
+            margin: 40px auto;
+            max-width: 1280px; /* Limits width on big screens */
+            width: 90%;
+            aspect-ratio: 16 / 9;
+            border: 2px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .footer {
+            font-size: 0.9rem;
+            color: #02644f;
+            text-shadow: 2px 2px 4px #ffffff;
+            
+        }   
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Essex Elementary Winter Concert!</h1>
+        <p> 12/17/2025</p>
+    </div>
+
+    <div class="video-container">
+        <iframe 
+            src="http://10.4.2.184:8889/eeslive" 
+            allow="autoplay; fullscreen"
+            allowfullscreen>
+        </iframe>
+    </div>
+
+    <div class="footer">
+        <h2>Enjoy the show!</h2>
+    </div>
+
+</body>
+</html>
