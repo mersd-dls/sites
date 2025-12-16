@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Booklet Printer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #316a36;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragging {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .status {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.processing {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin-top: 25px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #0c5460;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .download-btn.show {
+            display: block;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 PDF Booklet Maker</h1>
+        <h4>Create a printable booklet from your PDF</h4>
+        <p class="subtitle"><br><strong>This tool works best when documents that have a number of pages divisible by 4 (e.g. 4, 8, 12).</strong> Otherwise, blank pages will be added to meet the requirement.</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Click to upload or drag & drop</div>
+            <div class="upload-hint">PDF files only</div>
+            <input type="file" id="fileInput" accept=".pdf">
+        </div>
+
+        <div class="loader" id="loader"></div>
+        <div class="status" id="status"></div>
+        <button class="download-btn" id="downloadBtn">Download Booklet PDF</button>
+
+        <div class="info-box">
+            <strong>How it works:</strong>
+            1. Upload your PDF<br>
+            2. Pages are reordered for booklet printing (2 pages per sheet)<br>
+            3. Print the result two-sided (flip on short edge)<br>
+            4. Stack the pages and fold in the middle<br>
+            5. Staple along the fold to create your booklet!
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+        const loader = document.getElementById('loader');
+        const downloadBtn = document.getElementById('downloadBtn');
+        let processedPdfBlob = null;
+        let originalFileName = '';
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (processedPdfBlob) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(processedPdfBlob);
+                
+                // Create filename with -booklet suffix
+                const baseName = originalFileName.replace(/\.pdf$/i, '');
+                link.download = `${baseName}-booklet.pdf`;
+                
+                link.click();
+            }
+        });
+
+        async function renderPageToCanvas(page, scale) {
+            const viewport = page.getViewport({ scale: scale });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            return canvas;
+        }
+
+        async function handleFile(file) {
+            originalFileName = file.name;
+            showStatus('Processing your PDF...', 'processing');
+            loader.classList.add('show');
+            downloadBtn.classList.remove('show');
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const numPages = pdf.numPages;
+
+                // Calculate pages needed (must be multiple of 4)
+                const totalSheets = Math.ceil(numPages / 4);
+                const totalPages = totalSheets * 4;
+                const blankPages = totalPages - numPages;
+
+                // Create booklet page order (pairs for each sheet)
+                const pagePairs = [];
+                for (let sheet = 0; sheet < totalSheets; sheet++) {
+                    const leftOuter = totalPages - (sheet * 2);
+                    const rightOuter = (sheet * 2) + 1;
+                    const leftInner = (sheet * 2) + 2;
+                    const rightInner = totalPages - (sheet * 2) - 1;
+
+                    // Front of sheet: [last page | first page]
+                    pagePairs.push([leftOuter, rightOuter]);
+                    // Back of sheet: [second page | second-to-last page]
+                    pagePairs.push([leftInner, rightInner]);
+                }
+
+                // Create new PDF with pages side-by-side
+                const { jsPDF } = window.jspdf;
+                const newPdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'pt',
+                    format: 'letter'
+                });
+
+                const pageWidth = 792; // Letter landscape width
+                const pageHeight = 612; // Letter landscape height
+                const halfWidth = pageWidth / 2;
+
+                let firstPage = true;
+
+                for (let i = 0; i < pagePairs.length; i++) {
+                    const [leftPageNum, rightPageNum] = pagePairs[i];
+                    
+                    if (!firstPage) newPdf.addPage();
+                    firstPage = false;
+
+                    // Render left page
+                    if (leftPageNum <= numPages) {
+                        const page = await pdf.getPage(leftPageNum);
+                        const canvas = await renderPageToCanvas(page, 1.5);
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        
+                        // Fit to left half
+                        const imgAspect = canvas.width / canvas.height;
+                        const halfAspect = halfWidth / pageHeight;
+                        
+                        let w, h, x, y;
+                        if (imgAspect > halfAspect) {
+                            w = halfWidth;
+                            h = halfWidth / imgAspect;
+                            x = 0;
+                            y = (pageHeight - h) / 2;
+                        } else {
+                            h = pageHeight;
+                            w = pageHeight * imgAspect;
+                            x = (halfWidth - w) / 2;
+                            y = 0;
+                        }
+                        
+                        newPdf.addImage(imgData, 'JPEG', x, y, w, h);
+                    }
+
+                    // Render right page
+                    if (rightPageNum <= numPages) {
+                        const page = await pdf.getPage(rightPageNum);
+                        const canvas = await renderPageToCanvas(page, 1.5);
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        
+                        // Fit to right half
+                        const imgAspect = canvas.width / canvas.height;
+                        const halfAspect = halfWidth / pageHeight;
+                        
+                        let w, h, x, y;
+                        if (imgAspect > halfAspect) {
+                            w = halfWidth;
+                            h = halfWidth / imgAspect;
+                            x = halfWidth;
+                            y = (pageHeight - h) / 2;
+                        } else {
+                            h = pageHeight;
+                            w = pageHeight * imgAspect;
+                            x = halfWidth + (halfWidth - w) / 2;
+                            y = 0;
+                        }
+                        
+                        newPdf.addImage(imgData, 'JPEG', x, y, w, h);
+                    }
+
+                    showStatus(`Processing sheet ${Math.floor(i / 2) + 1} of ${totalSheets}...`, 'processing');
+                }
+
+                processedPdfBlob = newPdf.output('blob');
+                
+                loader.classList.remove('show');
+                showStatus(`✓ Success! Your ${numPages}-page PDF is ready for booklet printing.${blankPages > 0 ? ` (${blankPages} blank page${blankPages > 1 ? 's' : ''} added)` : ''}`, 'success');
+                downloadBtn.classList.add('show');
+
+            } catch (error) {
+                loader.classList.remove('show');
+                showStatus('Error processing PDF. Please try another file.', 'error');
+                console.error(error);
+            }
+        }
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = 'status show ' + type;
+        }
+    </script>
+</body>
+</html>
