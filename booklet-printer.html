@@ -190,13 +190,14 @@
 
         <div class="loader" id="loader"></div>
         <div class="status" id="status"></div>
+        <button class="download-btn" id="printBtn">Print Booklet</button>
         <button class="download-btn" id="downloadBtn">Download Booklet PDF</button>
-
+        
         <div class="info-box">
             <strong>How it works:</strong>
             1. Upload your PDF<br>
             2. Pages are reordered for booklet printing (2 pages per sheet)<br>
-            3. Print the result two-sided (flip on short edge)<br>
+            3. Print the result two-sided <b>(flip on short edge)</b><br>
             4. Stack the pages and fold in the middle<br>
             5. Staple along the fold to create your booklet!
         </div>
@@ -209,6 +210,7 @@
         const fileInput = document.getElementById('fileInput');
         const status = document.getElementById('status');
         const loader = document.getElementById('loader');
+        const printBtn = document.getElementById('printBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         let processedPdfBlob = null;
         let originalFileName = '';
@@ -236,6 +238,17 @@
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
+            }
+        });
+        printBtn.addEventListener('click', () => {
+            if (processedPdfBlob) {
+                const blobUrl = URL.createObjectURL(processedPdfBlob);
+                const printWindow = window.open(blobUrl);
+                if (printWindow) {
+                    printWindow.onload = () => {
+                        printWindow.print();
+                    };
+                }
             }
         });
 
@@ -271,6 +284,7 @@
             originalFileName = file.name;
             showStatus('Processing your PDF...', 'processing');
             loader.classList.add('show');
+            printBtn.classList.remove('show');
             downloadBtn.classList.remove('show');
 
             try {
@@ -376,6 +390,7 @@
                 
                 loader.classList.remove('show');
                 showStatus(`✓ Success! Your ${numPages}-page PDF is ready for booklet printing.${blankPages > 0 ? ` (${blankPages} blank page${blankPages > 1 ? 's' : ''} added)` : ''}`, 'success');
+                printBtn.classList.add('show');
                 downloadBtn.classList.add('show');
 
             } catch (error) {
