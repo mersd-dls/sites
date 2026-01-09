@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #000000, #0a0a1a);
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column; /* Changed to column to stack banner and planets */
+            align-items: center;
+        }
+
+        .star-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Keep them behind planets */
+            overflow: hidden;
+            pointer-events: none;
+        }   
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%; /* Makes them circles */
+            
+        }
+
+        /* The Shooting Star */
+        .shooting-star {
+            position: fixed;
+            height: 2px;
+        /* This creates the long fading trail */
+            background: linear-gradient(90deg, rgba(255,255,255,1), rgba(255,255,255,0));
+            width: 100px; 
+            z-index: -1;
+            pointer-events: none;
+        /* Glowing head */
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.5);
+            opacity: 0;
+        }
+
+        /* The movement animation */
+        @keyframes shoot {
+    0% {
+        transform: translateX(0) translateY(0) rotate(-45deg);
+        /* Use the random opacity assigned by JS, default to 1 */
+        opacity: var(--max-opacity, 1);
+    }
+    70% {
+        /* Maintain that specific brightness for most of the trip */
+        opacity: var(--max-opacity, 1);
+    }
+    100% {
+        transform: translateX(-120vw) translateY(120vh) rotate(-45deg);
+        opacity: 0;
+    }
+}
+
+        /* --- NEW BANNER STYLES --- */
+        .top-banner {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05); /* Semi-transparent background */
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px); /* Adds a glass effect */
+        }
+
+        .top-banner h1 {
+            color: #ffffff;
+            font-size: 24px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+        /* ------------------------- */
+        
+        .solar-system {
+            width: 100%;
+            max-width: 1400px;
+            margin: auto; /* This keeps the planets centered vertically in the remaining space */
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 40px 20px;
+        }
+
+        .celestial-body {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .celestial-body:hover {
+            transform: scale(1.1);
+        }
+
+        .planet-link {
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .planet {
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .celestial-body:hover .planet {
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.6);
+        }
+
+        .sun {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, #ffd700, #ff8c00);
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.8);
+        }
+
+        .mercury {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, #8c7853, #5a5a5a);
+        }
+
+        .venus {
+            width: 45px;
+            height: 45px;
+            background: radial-gradient(circle, #ffc649, #d4a574);
+        }
+
+        .earth {
+            width: 48px;
+            height: 48px;
+            background: radial-gradient(circle, #4a90e2, #2e7d32);
+        }
+
+        .mars {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #e27b58, #a0522d);
+        }
+
+        .jupiter {
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle, #c88b3a, #8b6914);
+        }
+
+        .saturn {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #f4e4c1, #c9b382);
+            position: relative;
+        }
+
+        .saturn::after {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 30px;
+            border: 3px solid rgba(200, 180, 140, 0.6);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .uranus {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #4fd0e7, #2e8b9e);
+        }
+
+        .neptune {
+            width: 58px;
+            height: 58px;
+            background: radial-gradient(circle, #4169e1, #1e3a8a);
+        }
+        .pluto {
+            width: 15px;
+            height: 15px;
+            background: radial-gradient(circle, #f6ddbd, #968570);
+        }
+        .label {
+            margin-top: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .celestial-body:hover .label {
+            opacity: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .solar-system {
+                gap: 15px;
+            }
+            .sun { width: 100px; height: 100px; }
+            .jupiter { width: 75px; height: 75px; }
+            .saturn { width: 65px; height: 65px; }
+            .saturn::after { width: 100px; height: 25px; }
+        }
+
+        @media (max-width: 768px) {
+            .solar-system {
+                flex-direction: column;
+                gap: 30px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-banner">
+        <h1>Solar System Research</h1>
+    </header>
+
+    <div class="solar-system">
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet sun"></div>
+                <div class="label">Sun</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet mercury"></div>
+                <div class="label">Mercury</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet venus"></div>
+                <div class="label">Venus</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet earth"></div>
+                <div class="label">Earth</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet mars"></div>
+                <div class="label">Mars</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet jupiter"></div>
+                <div class="label">Jupiter</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet saturn"></div>
+                <div class="label">Saturn</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet uranus"></div>
+                <div class="label">Uranus</div>
+            </a>
+        </div>
+
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet neptune"></div>
+                <div class="label">Neptune</div>
+            </a>
+        </div>
+        <div class="celestial-body">
+            <a href="#" class="planet-link">
+                <div class="planet pluto"></div>
+                <div class="label">Pluto</div>
+            </a>
+        </div>
+    </div>
+   <div class="star-container" id="starContainer"></div>
+
+<script>
+    const container = document.getElementById('starContainer');
+    const starCount = 200; // Adjust this number for more or fewer stars
+
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        // Randomize size between 1px and 3px
+        const size = Math.random() * 3 + 'px';
+        star.style.width = size;
+        star.style.height = size;
+        
+        // Randomize position
+        star.style.top = Math.random() * 100 + 'vh';
+        star.style.left = Math.random() * 100 + 'vw';
+        
+        // Randomize transparency (between 0.1 and 0.8)
+        star.style.opacity = Math.random() * 0.7 + 0.1;
+        
+        container.appendChild(star);
+    }
+    function createShootingStar() {
+    const star = document.createElement('div');
+    star.className = 'shooting-star';
+    
+    // 1. Determine "Distance" (0 is far away, 1 is close)
+    const distanceFactor = Math.random(); 
+    
+    // 2. Set Opacity based on distance (0.1 to 0.8)
+    const maxOpacity = distanceFactor * 0.7 + 0.1;
+    star.style.setProperty('--max-opacity', maxOpacity);
+    
+    // 3. Set Thickness based on distance (1px to 3px)
+    const thickness = distanceFactor * 2 + 1;
+    star.style.height = `${thickness}px`;
+    
+    // 4. Set Speed based on distance (Further stars move slower)
+    // Close stars = 2s, Far stars = 6s
+    const duration = (1 - distanceFactor) * 8000 + 4000;
+    
+    // Positioning and Animation
+    star.style.left = '110vw'; 
+    star.style.top = Math.random() * 50 + 'vh'; 
+    star.style.animation = `shoot ${duration}ms linear forwards`;
+    
+    document.body.appendChild(star);
+    
+    setTimeout(() => {
+        star.remove();
+    }, duration);
+}
+
+// Keep your existing interval logic
+function setNextStar() {
+    const randomDelay = Math.random() * 10000 + 5000;
+    setTimeout(() => {
+        createShootingStar();
+        setNextStar();
+    }, randomDelay);
+}
+
+setNextStar();
+
+// Start the cycle
+setNextStar();
+</script> 
+</body>
+</html>
