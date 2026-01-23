@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Signage Player</title>
+    <style>
+        /* RESET & FULLSCREEN SETUP */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; }
+        
+        /* THE STAGE */
+        #stage {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ASSET STYLING */
+        img, video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Ensures entire image is visible without cropping */
+            opacity: 0;
+            transition: opacity 1s ease-in-out; /* Smooth cross-fade */
+            z-index: 0;
+        }
+
+        /* VISIBLE STATE */
+        .active { opacity: 1; z-index: 1; }
+        
+        /* LOADING INDICATOR (Hidden by default) */
+        #loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #333; font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">Loading Signage...</div>
+    <div id="stage"></div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const CONFIG = {
+            // PASTE YOUR GOOGLE SCRIPT URL HERE
+            // Example: https://script.google.com/macros/s/AKfycbx.../exec
+            endpoint: "https://script.google.com/macros/s/AKfycbw8PMYwsmipjs6gU6fs9HcVwY9c4GqXMbRjFQMvOo3zN4QpTDs7qkehF_eKMsVUFpBW/exec", 
+            
+            pollInterval: 60000,    // Check for updates every 60 seconds
+            slideDuration: 10000,   // Show each slide for 10 seconds
+            reloadHour: 3           // Force full reload at 3 AM (0-23)
+        };
+
+        // --- STATE MANAGEMENT ---
+        let playlist = [];
+        let currentIndex = 0;
+        let takeoverActive = false;
+        let currentVersion = 0;
+        let timer = null;
+
+        // --- INITIALIZATION ---
+        async function init() {
+            await fetchPlaylist();
+            
+            if (playlist.length > 0) {
+                document.getElementById('loader').style.display = 'none';
+                playNext();
+            }
+            
+            // Start the background poller
+            setInterval(fetchPlaylist, CONFIG.pollInterval);
+            
+            // Start the 3AM reboot check
+            setInterval(checkReboot, 60000); 
+        }
+
+        // --- THE BRAIN: FETCH DATA ---
+        async function fetchPlaylist() {
+            try {
+                // We append ?type=playlist so the script knows to send JSON, not the upload HTML
+                const response = await fetch(`${CONFIG.endpoint}?type=playlist`);
+                const data = await response.json();
+
+                // 1. Check for remote reload trigger (Version changed)
+                if (currentVersion !== 0 && data.version > currentVersion) {
+                    console.log("New content version detected. Reloading...");
+                    window.location.reload(true);
+                    return;
+                }
+                currentVersion = data.version;
+
+                // 2. Check for Takeover
+                if (data.takeover && data.takeover.active) {
+                    // If takeover just started, interrupt everything
+                    if (!takeoverActive) {
+                        takeoverActive = true;
+                        playlist = [data.takeover]; // Replace rotation with single takeover item
+                        currentIndex = 0;
+                        resetLoop(); 
+                    }
+                } else {
+                    // If takeover just ended, go back to normal
+                    if (takeoverActive) {
+                        takeoverActive = false;
+                        playlist = data.assets;
+                        currentIndex = 0;
+                        resetLoop();
+                    } else {
+                        // Standard update (if not in takeover mode)
+                        playlist = data.assets;
+                    }
+                }
+
+            } catch (e) {
+                console.error("Error fetching playlist:", e);
+            }
+        }
+
+        // --- THE ENGINE: PLAY CONTENT ---
+        function playNext() {
+            if (playlist.length === 0) return;
+
+            const stage = document.getElementById('stage');
+            const asset = playlist[currentIndex];
+            
+            // 1. Create New Element
+            let el;
+            if (asset.type === 'video') {
+                el = document.createElement('video');
+                el.src = asset.url;
+                el.muted = true;    // Required for autoplay
+                el.autoplay = true;
+                el.playsInline = true;
+                // If it's a takeover video, loop it. If it's rotation, play once then next.
+                el.loop = (playlist.length === 1); 
+                
+                // If video in rotation, wait for it to end before switching
+                if (playlist.length > 1) {
+                    el.onended = () => {
+                        clearTimeout(timer);
+                        playNext();
+                    };
+                }
+            } else {
+                el = document.createElement('img');
+                el.src = asset.url;
+            }
+
+            // 2. Add to Stage (starts transparent)
+            stage.appendChild(el);
+
+            // 3. Trigger Fade In
+            // Tiny delay to allow DOM to register the element before changing opacity
+            requestAnimationFrame(() => {
+                el.classList.add('active');
+            });
+
+            // 4. Clean Up Old Elements (Garbage Collection)
+            // We keep the new one (last child) and maybe the one fading out. Remove the rest.
+            while (stage.children.length > 2) {
+                stage.removeChild(stage.firstChild);
+            }
+
+            // 5. Schedule Next Slide (Only if it's an image or we are not waiting for video end)
+            if (asset.type === 'image') {
+                currentIndex = (currentIndex + 1) % playlist.length;
+                timer = setTimeout(playNext, CONFIG.slideDuration);
+            } else if (playlist.length > 1) {
+                 // For videos in rotation, we update index here but wait for 'onended' to call playNext
+                 currentIndex = (currentIndex + 1) % playlist.length;
+            }
+        }
+
+        function resetLoop() {
+            clearTimeout(timer);
+            const stage = document.getElementById('stage');
+            stage.innerHTML = ''; // Hard clear
+            playNext();
+        }
+
+        function checkReboot() {
+            const now = new Date();
+            if (now.getHours() === CONFIG.reloadHour && now.getMinutes() === 0) {
+                window.location.reload(true);
+            }
+        }
+
+        // Start engine
+        init();
+
+    </script>
+</body>
+</html>
