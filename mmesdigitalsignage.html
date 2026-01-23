@@ -25,9 +25,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Ensures entire image is visible without cropping */
+            object-fit: contain;
+            background-color: #000; /* FIX: Prevents seeing the image underneath */
             opacity: 0;
-            transition: opacity 1s ease-in-out; /* Smooth cross-fade */
+            transition: opacity 1s ease-in-out; 
             z-index: 0;
         }
 
@@ -53,8 +54,8 @@
             // Example: https://script.google.com/macros/s/AKfycbx.../exec
             endpoint: "https://script.google.com/macros/s/AKfycbw8PMYwsmipjs6gU6fs9HcVwY9c4GqXMbRjFQMvOo3zN4QpTDs7qkehF_eKMsVUFpBW/exec", 
             
-            pollInterval: 60000,    // Check for updates every 60 seconds
-            slideDuration: 10000,   // Show each slide for 10 seconds
+            pollInterval: 600000,    // Check for updates every 10 minutes
+            slideDuration: 7000,   // Show each slide for 7 seconds
             reloadHour: 3           // Force full reload at 3 AM (0-23)
         };
 
