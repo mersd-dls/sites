@@ -125,6 +125,7 @@
         }
 
         // --- THE ENGINE: PLAY CONTENT ---
+        // --- THE ENGINE: PLAY CONTENT ---
         function playNext() {
             if (playlist.length === 0) return;
 
@@ -136,13 +137,32 @@
             if (asset.type === 'video') {
                 el = document.createElement('video');
                 el.src = asset.url;
-                el.muted = true;    // Required for autoplay
-                el.autoplay = true;
-                el.playsInline = true;
-                // If it's a takeover video, loop it. If it's rotation, play once then next.
-                el.loop = (playlist.length === 1); 
+                el.muted = true;    // ABSOLUTELY REQUIRED for auto-play
+                el.playsInline = true; 
+                el.preload = "auto"; // Tell browser to fetch immediately
                 
-                // If video in rotation, wait for it to end before switching
+                // If takeover, loop. If rotation, play once.
+                el.loop = (playlist.length === 1); 
+
+                // FORCE PLAY: Don't rely on 'autoplay' attribute
+                // We wait for the video to be ready, then trigger play
+                el.oncanplay = () => {
+                    const playPromise = el.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.error("Auto-play was prevented:", error);
+                            // Fallback: If video fails, skip to next after 2 seconds
+                            setTimeout(playNext, 2000); 
+                        });
+                    }
+                };
+                
+                // ERROR HANDLING: If the URL is bad (e.g. Virus Scan block), skip it
+                el.onerror = () => {
+                    console.error("Video failed to load (likely >25MB Drive Limit)");
+                    setTimeout(playNext, 2000); 
+                }
+
                 if (playlist.length > 1) {
                     el.onended = () => {
                         clearTimeout(timer);
@@ -158,23 +178,21 @@
             stage.appendChild(el);
 
             // 3. Trigger Fade In
-            // Tiny delay to allow DOM to register the element before changing opacity
             requestAnimationFrame(() => {
                 el.classList.add('active');
             });
 
-            // 4. Clean Up Old Elements (Garbage Collection)
-            // We keep the new one (last child) and maybe the one fading out. Remove the rest.
+            // 4. Garbage Collection
             while (stage.children.length > 2) {
                 stage.removeChild(stage.firstChild);
             }
 
-            // 5. Schedule Next Slide (Only if it's an image or we are not waiting for video end)
+            // 5. Schedule Next Slide
             if (asset.type === 'image') {
                 currentIndex = (currentIndex + 1) % playlist.length;
                 timer = setTimeout(playNext, CONFIG.slideDuration);
             } else if (playlist.length > 1) {
-                 // For videos in rotation, we update index here but wait for 'onended' to call playNext
+                 // For video, we wait for 'onended', but we increment index now
                  currentIndex = (currentIndex + 1) % playlist.length;
             }
         }
