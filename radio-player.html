@@ -71,10 +71,10 @@
         }
 
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 3.5rem;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            font-family: 'Helvetica', sans-serif;
+            font-weight: 600;
+            font-size: 3rem;
+            background: white;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -473,7 +473,7 @@
     <div class="container">
         <header>
             <h1>Radio Hub</h1>
-            <div class="subtitle">Live Stream Player</div>
+            <!--<div class="subtitle">Live Stream Player</div>-->
         </header>
 
         <button class="filter-toggle" id="filterToggle">
@@ -485,12 +485,12 @@
             <button class="filter-btn active" data-category="all">All Stations</button>
         </div>
 
-        <div id="recentSection" style="display: none;">
+        <!--<div id="recentSection" style="display: none;">
             <div class="section-title">Recently Played</div>
             <div class="stations-grid recent" id="recentStations"></div>
-        </div>
+        </div> -->
 
-        <div class="section-title">All Stations</div>
+        <!--<div class="section-title">All Stations</div>-->
         <div class="stations-grid" id="allStations"></div>
     </div>
 
@@ -536,7 +536,7 @@
             },
             {
                 name: 'WXNA',
-                url: 'http://listen.wxnafm.org/stream',
+                url: 'http://listen.wxnafm.org:8000/stream',
                 image: 'https://www.wxnafm.org/wp-content/uploads/2018/02/logo-wxna-whitered-footer.png',
                 categories: ['Community', 'College']
             },
