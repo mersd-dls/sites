@@ -670,6 +670,36 @@
             });
             event.currentTarget.classList.add('playing');
 
+            // Update Media Session API for iOS lock screen and media controls
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: station.name,
+                    artist: 'Live Radio Stream',
+                    album: 'Radio Streamer',
+                    artwork: [
+                        { src: station.image, sizes: '96x96', type: 'image/png' },
+                        { src: station.image, sizes: '128x128', type: 'image/png' },
+                        { src: station.image, sizes: '192x192', type: 'image/png' },
+                        { src: station.image, sizes: '256x256', type: 'image/png' },
+                        { src: station.image, sizes: '384x384', type: 'image/png' },
+                        { src: station.image, sizes: '512x512', type: 'image/png' }
+                    ]
+                });
+
+                // Set up media session action handlers
+                navigator.mediaSession.setActionHandler('play', () => {
+                    audioPlayer.play();
+                });
+
+                navigator.mediaSession.setActionHandler('pause', () => {
+                    audioPlayer.pause();
+                });
+
+                navigator.mediaSession.setActionHandler('stop', () => {
+                    stopPlayback();
+                });
+            }
+
             // Save to recent
             saveRecentStation(station.name);
         }
