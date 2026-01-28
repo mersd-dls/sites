@@ -502,8 +502,8 @@
                 <div class="now-playing-station" id="npStation"></div>
             </div>
             <div class="controls">
-                <button class="control-btn" id="stopBtn">⏹</button>
-                <div class="volume-control">
+                <button class="control-btn" id="stopBtn">⬜</button>
+                <div class="volume-control"
                     <span>🔊</span>
                     <input type="range" min="0" max="100" value="70" class="volume-slider" id="volumeSlider">
                 </div>
@@ -545,6 +545,12 @@
                 url: 'https://icecast.radiofrance.fr/fip-midfi.mp3',
                 image: 'https://upload.wikimedia.org/wikipedia/commons/1/16/FIP_logo_2021.svg',
                 categories: ['Jazz', 'Eclectic']
+            },
+            {
+                name: 'WGBH',
+                url: 'https://wgbh-live.streamguys1.com/wgbh',
+                image: 'https://cdn-profiles.tunein.com/s28957/images/logog.png',
+                categories: ['News']
             }
         ];
 
