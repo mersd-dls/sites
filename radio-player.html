@@ -96,9 +96,9 @@
         .filter-toggle {
             font-family: 'Orbitron', sans-serif;
             background: var(--card-bg);
-            border: 1px solid rgba(0, 217, 255, 0.3);
+            border: 2px solid rgba(0, 217, 255, 0.3);
             color: var(--text-primary);
-            padding: 0.6rem 1.2rem;
+            padding: 0.3rem 2rem;
             border-radius: 0.5rem;
             cursor: pointer;
             font-size: 0.5rem;
@@ -117,7 +117,7 @@
         }
 
         .filter-icon {
-            font-size: 1rem;
+            font-size: 0.5rem;
         }
 
         .filters {
@@ -470,21 +470,25 @@
     </style>
 </head>
 <body>
+
+    
     <div class="container">
-        <header>
+        <!--<header>
             <h1>Radio Hub</h1>
-            <!--<div class="subtitle">Live Stream Player</div>-->
-        </header>
+            <div class="subtitle">Live Stream Player</div>-->
+        
 
         <button class="filter-toggle" id="filterToggle">
-            <span class="filter-icon">⚙</span>
-            <span>Filters</span>
+            <span class="filter-icon">⛛</span>
+            <span>Filter</span>
+            
         </button>
 
         <div class="filters" id="filters">
             <button class="filter-btn active" data-category="all">All Stations</button>
         </div>
 
+        
         <!--<div id="recentSection" style="display: none;">
             <div class="section-title">Recently Played</div>
             <div class="stations-grid recent" id="recentStations"></div>
@@ -562,6 +566,12 @@
                 name: 'WUMB - Celtic',
                 url: 'http://wumb.streamguys1.com/wumb919cj',
                 image: 'https://mersd-dls.github.io/sites/images/umb-celtic.png',
+                categories: ['Celtic']
+            },
+            {
+                name: 'Radio Siamsa',
+                url: 'https://cast02.siamsa.ie:8000/radio.mp3',
+                image: 'https://mersd-dls.github.io/sites/images/radio-siamsa.png',
                 categories: ['Celtic']
             },
         ];
