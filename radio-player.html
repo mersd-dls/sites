@@ -703,12 +703,28 @@ function renderAllStations(filterCategory = 'all') {
 
         // Play station
         function playStation(station) {
+            // OPTIONAL: prevent reloading if clicking the same playing station
+            if (currentStation === station && !audioPlayer.paused) return;
+
             currentStation = station;
             audioPlayer.src = station.url;
-            audioPlayer.play().catch(err => {
-                console.error('Playback error:', err);
-                alert('Unable to play this station. The stream may be temporarily unavailable.');
-            });
+            
+            // We capture the play request
+            const playPromise = audioPlayer.play();
+
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    // FIX: Check if the error is just an interruption
+                    if (err.name === 'AbortError') {
+                        console.log('Playback aborted by user action (fast switching)');
+                        return; // Exit silently, don't show alert
+                    }
+
+                    // For actual errors, show the alert
+                    console.error('Playback error:', err);
+                    alert('Unable to play this station. The stream may be temporarily unavailable.');
+                });
+            }
 
             npStation.textContent = station.name;
             npImage.src = station.image;
@@ -718,7 +734,15 @@ function renderAllStations(filterCategory = 'all') {
             document.querySelectorAll('.station-card').forEach(card => {
                 card.classList.remove('playing');
             });
-            event.currentTarget.classList.add('playing');
+            // Check if event exists (it might not if called via code)
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('playing');
+            } else {
+                // Fallback to find the card by text if event is missing
+                const cards = Array.from(document.querySelectorAll('.station-card'));
+                const card = cards.find(c => c.querySelector('.station-name').textContent === station.name);
+                if (card) card.classList.add('playing');
+            }
 
             // Update Media Session API for iOS lock screen and media controls
             if ('mediaSession' in navigator) {
@@ -753,7 +777,6 @@ function renderAllStations(filterCategory = 'all') {
             // Save to recent
             saveRecentStation(station.name);
         }
-
         // Stop playback
         function stopPlayback() {
             audioPlayer.pause();
