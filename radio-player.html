@@ -542,7 +542,8 @@
                 name: 'WXNA',
                 url: 'http://listen.wxnafm.org:8000/stream',
                 image: 'https://www.wxnafm.org/wp-content/uploads/2018/02/logo-wxna-whitered-footer.png',
-                categories: ['Community', 'College']
+                categories: ['Community', 'Eclectic'],
+                secure: false
             },
             {
                 name: 'FIP',
@@ -654,17 +655,32 @@
             return card;
         }
 
-        // Render all stations
-        function renderAllStations(filterCategory = 'all') {
-            allStationsGrid.innerHTML = '';
-            const filteredStations = filterCategory === 'all' 
-                ? stations 
-                : stations.filter(s => s.categories.includes(filterCategory));
-            
-            filteredStations.forEach(station => {
-                allStationsGrid.appendChild(createStationCard(station));
-            });
+       // Render all stations
+function renderAllStations(filterCategory = 'all') {
+    // 1. Clear the grid
+    allStationsGrid.innerHTML = '';
+
+    // 2. Check if we are on a secure page (GitHub)
+    const isSecurePage = window.location.protocol === 'https:';
+
+    stations.forEach(station => {
+        // --- SECURITY CHECK ---
+        // If on HTTPS and station is insecure (like WXNA), skip it.
+        if (isSecurePage && station.secure === false) {
+            return; 
         }
+
+        // --- CATEGORY FILTER ---
+        // Check if the station matches the selected category
+        const matchesCategory = filterCategory === 'all' || station.categories.includes(filterCategory);
+
+        // If it passes both checks, draw the card
+        if (matchesCategory) {
+            const card = createStationCard(station);
+            allStationsGrid.appendChild(card);
+        }
+    });
+}
 
         // Render recent stations
         function renderRecentStations() {
