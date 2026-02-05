@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spinitron Metadata Test v2</title>
+    <style>
+        body {
+            background-color: #222;
+            color: #eee;
+            font-family: 'Courier New', monospace;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .station-box {
+            background: #333;
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 5px solid #00d9ff;
+        }
+        .station-name { color: #00d9ff; font-weight: bold; margin-bottom: 0.5rem; }
+        .song-display { font-size: 1.2rem; color: #ffbe0b; min-height: 1.5em; }
+        .status { font-size: 0.8rem; color: #aaa; margin-top: 0.5rem; }
+        #debug-log {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #000;
+            border: 1px solid #444;
+            font-size: 0.8rem;
+            color: #0f0;
+            height: 300px;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+        }
+        button {
+            padding: 1rem 2rem;
+            background: #ff006e;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Metadata Test v2 (Text Parsing)</h1>
+    <button onclick="runTest()">Run Fetch Test</button>
+
+    <div class="station-box">
+        <div class="station-name">WXNA Nashville</div>
+        <div class="song-display" id="wxna-song">Waiting...</div>
+        <div class="status" id="wxna-status">Idle</div>
+    </div>
+
+    <div class="station-box">
+        <div class="station-name">KZUM 89.3</div>
+        <div class="song-display" id="kzum-song">Waiting...</div>
+        <div class="status" id="kzum-status">Idle</div>
+    </div>
+
+    <div class="station-box">
+        <div class="station-name">WZBC Newton</div>
+        <div class="song-display" id="wzbc-song">Waiting...</div>
+        <div class="status" id="wzbc-status">Idle</div>
+    </div>
+
+    <h3>Debug Log:</h3>
+    <div id="debug-log">Ready.</div>
+
+    <script>
+        function log(msg) {
+            const logBox = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logBox.innerText += `\n[${timestamp}] ${msg}`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        async function fetchSpinitron(stationId, elementId, statusId) {
+            const displayEl = document.getElementById(elementId);
+            const statusEl = document.getElementById(statusId);
+            
+            // Using the same proxy that worked for WXNA and KZUM
+            const targetUrl = `https://widgets.spinitron.com/widget/now-playing?station=${stationId}`;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+            statusEl.innerText = 'Fetching...';
+            
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+                const htmlText = await response.text();
+                
+                // --- NEW PARSING LOGIC (TEXT BASED) ---
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                
+                // Get raw text and clean it up
+                let rawText = doc.body.innerText.trim();
+                // Remove newlines and extra spaces
+                rawText = rawText.replace(/\s+/g, ' '); 
+
+                log(`${stationId} Raw Text: "${rawText}"`);
+
+                // Remove "Playing " prefix if it exists (WXNA has this)
+                if (rawText.startsWith("Playing ")) {
+                    rawText = rawText.substring(8);
+                }
+
+                // We expect: "Song Title by Artist Name from Album..."
+                // Split by " by "
+                const parts = rawText.split(' by ');
+
+                if (parts.length >= 2) {
+                    const song = parts[0].trim();
+                    
+                    // The rest contains "Artist from Album..." or just "Artist"
+                    // We split the second part by " from " to isolate the Artist
+                    const rest = parts.slice(1).join(' by '); // Join back in case Artist has " by " in name? unlikely but safe.
+                    const artistParts = rest.split(' from ');
+                    const artist = artistParts[0].trim();
+
+                    // Success!
+                    const finalString = `${song} by ${artist}`;
+                    displayEl.innerText = finalString;
+                    statusEl.innerText = 'Success';
+                    statusEl.style.color = '#0f0';
+                    log(`${stationId} Parsed: [${song}] - [${artist}]`);
+                } else {
+                    // Fallback if pattern doesn't match
+                    displayEl.innerText = 'Format Unknown';
+                    statusEl.innerText = 'Could not split by " by "';
+                    statusEl.style.color = 'orange';
+                }
+
+            } catch (error) {
+                log(`${stationId} Error: ${error.message}`);
+                displayEl.innerText = 'Fetch Failed';
+                statusEl.innerText = 'Network/Proxy Error';
+                statusEl.style.color = 'red';
+            }
+        }
+
+        function runTest() {
+            document.getElementById('debug-log').innerText = 'Starting...';
+            fetchSpinitron('wxna', 'wxna-song', 'wxna-status');
+            fetchSpinitron('kzum', 'kzum-song', 'kzum-status');
+            fetchSpinitron('wzbc', 'wzbc-song', 'wzbc-status');
+        }
+        
+        // Auto-run
+        runTest();
+    </script>
+</body>
+</html>
