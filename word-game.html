@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Critical for iOS/iPad to prevent zooming on double taps and making it feel like a native app -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Custom Wordle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'media',
+            theme: {
+                extend: {
+                    colors: {
+                        wordle: {
+                            green: '#538d4e',
+                            yellow: '#b59f3b',
+                            gray: '#3a3a3c',
+                            lightGray: '#818384',
+                            keybg: '#d3d6da',
+                            keybgDark: '#818384'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            overscroll-behavior-y: none; /* Prevents pull-to-refresh on mobile */
+        }
+        .tile {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            line-height: 2rem;
+            font-weight: bold;
+            vertical-align: middle;
+            box-sizing: border-box;
+            text-transform: uppercase;
+            user-select: none;
+            transition: transform 0.15s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .tile[data-state='active'] {
+            animation: popIn 0.1s;
+        }
+        .keyboard-row {
+            display: flex;
+            width: 100%;
+            margin: 0 auto 8px;
+            touch-action: manipulation; /* Faster tap response */
+        }
+        .key {
+            font-weight: bold;
+            border: 0;
+            padding: 0;
+            margin: 0 4px 0 0;
+            height: 58px;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.3);
+            transition: background-color 0.2s;
+        }
+        .key:last-child {
+            margin: 0;
+        }
+        .key.large {
+            flex: 1.5;
+            font-size: 12px;
+        }
+        
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            40% { transform: scale(1.1); opacity: 1; }
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .shake { animation: shake 0.6s; }
+
+        /* Toast styles */
+        #toast-container {
+            position: fixed;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+        .toast {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans h-screen flex flex-col">
+
+    <!-- SCREEN: CREATE -->
+    <div id="create-screen" class="hidden flex-1 flex-col items-center p-6 pt-12 max-w-lg mx-auto w-full">
+        <h1 class="text-3xl font-extrabold mb-8 text-center tracking-wider">CREATE WORDLE</h1>
+        
+        <div class="w-full bg-gray-50 dark:bg-gray-800 p-6 md:p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+            <form id="create-form" class="flex flex-col gap-4">
+                <label class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                    Enter the secret word:
+                </label>
+                <input
+                    type="text"
+                    id="secret-input"
+                    maxlength="10"
+                    class="p-4 text-2xl font-bold text-center uppercase border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="e.g. APPLE"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                />
+                <p class="text-xs text-center text-gray-500">Must be between 3 and 10 letters.</p>
+                <button
+                    type="submit"
+                    id="generate-btn"
+                    class="mt-4 p-4 bg-wordle-green hover:bg-green-700 disabled:opacity-50 text-white font-bold rounded-lg transition-colors text-lg"
+                    disabled
+                >
+                    Generate Link
+                </button>
+            </form>
+
+            <div id="link-container" class="hidden mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex-col items-center">
+                <p class="text-sm font-semibold mb-2 text-center text-wordle-green">Your link is ready!</p>
+                <div class="w-full flex items-center bg-white dark:bg-gray-900 rounded border border-gray-300 dark:border-gray-600 p-3 overflow-x-auto">
+                    <span id="generated-link" class="text-sm truncate w-full select-all text-gray-800 dark:text-gray-200"></span>
+                </div>
+                <button
+                    id="copy-btn"
+                    class="mt-4 w-full p-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition-colors"
+                >
+                    Copy Link
+                </button>
+                <a id="play-link" href="#" class="mt-4 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline text-center">
+                    Play this word
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: GAME -->
+    <div id="game-screen" class="hidden flex-1 flex-col h-full max-w-lg mx-auto w-full">
+        <!-- Header -->
+        <header class="flex items-center justify-center p-4 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-2xl font-extrabold tracking-widest uppercase">Wordle</h1>
+        </header>
+
+        <!-- Board -->
+        <div class="flex-1 flex justify-center items-center overflow-hidden p-4">
+            <div id="board" class="grid gap-1.5 p-2 w-full max-w-sm mx-auto aspect-square">
+                <!-- Grid items generated by JS -->
+            </div>
+        </div>
+
+        <!-- Virtual Keyboard -->
+        <div id="keyboard" class="w-full p-2 pb-6 md:pb-2 select-none">
+            <!-- Rows generated by JS -->
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- Utility: Obfuscation ---
+        const encodeWord = (word) => {
+            const reversed = word.toUpperCase().split('').reverse().join('');
+            return btoa(encodeURIComponent(reversed));
+        };
+
+        const decodeWord = (encoded) => {
+            try {
+                const reversed = decodeURIComponent(atob(encoded));
+                return reversed.split('').reverse().join('');
+            } catch (e) {
+                return null;
+            }
+        };
+
+        // --- Game State ---
+        let targetWord = '';
+        let wordLength = 0;
+        let maxGuesses = 6;
+        let guesses = []; // Array of string guesses
+        let currentGuess = '';
+        let gameStatus = 'playing'; // 'playing', 'won', 'lost'
+        let letterStates = {}; // e.g. { 'A': 'correct', 'B': 'present', 'C': 'absent' }
+
+        const keyboardLayout = [
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+            ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE']
+        ];
+
+        // --- DOM Elements ---
+        const screens = {
+            create: document.getElementById('create-screen'),
+            game: document.getElementById('game-screen')
+        };
+        const boardEl = document.getElementById('board');
+        const keyboardEl = document.getElementById('keyboard');
+        const toastContainer = document.getElementById('toast-container');
+        
+        // Create Screen Elements
+        const secretInput = document.getElementById('secret-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const linkContainer = document.getElementById('link-container');
+        const generatedLinkEl = document.getElementById('generated-link');
+        const copyBtn = document.getElementById('copy-btn');
+        const playLink = document.getElementById('play-link');
+
+        // --- Initialization ---
+        function init() {
+            const params = new URLSearchParams(window.location.search);
+            const encodedWord = params.get('w');
+            
+            if (encodedWord) {
+                const decoded = decodeWord(encodedWord);
+                if (decoded && /^[A-Z]+$/.test(decoded)) {
+                    // Valid game link found
+                    targetWord = decoded;
+                    wordLength = targetWord.length;
+                    maxGuesses = Math.max(6, wordLength + 1); // Give a bit more leeway for very long words
+                    showScreen('game');
+                    setupGame();
+                    return;
+                }
+            }
+            
+            // Default to create screen
+            showScreen('create');
+            setupCreate();
+        }
+
+        function showScreen(screenName) {
+            screens.create.classList.add('hidden');
+            screens.create.classList.remove('flex');
+            screens.game.classList.add('hidden');
+            screens.game.classList.remove('flex');
+
+            screens[screenName].classList.remove('hidden');
+            screens[screenName].classList.add('flex');
+        }
+
+        // --- Create Screen Logic ---
+        function setupCreate() {
+            secretInput.addEventListener('input', (e) => {
+                let val = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+                e.target.value = val;
+                generateBtn.disabled = val.length < 3 || val.length > 10;
+            });
+
+            document.getElementById('create-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const word = secretInput.value;
+                if (word.length >= 3 && word.length <= 10) {
+                    const encoded = encodeWord(word);
+                    const newUrl = `${window.location.origin}${window.location.pathname}?w=${encoded}`;
+                    generatedLinkEl.textContent = newUrl;
+                    playLink.href = newUrl;
+                    linkContainer.classList.remove('hidden');
+                    linkContainer.classList.add('flex');
+                    copyBtn.textContent = 'Copy Link';
+                }
+            });
+
+            copyBtn.addEventListener('click', () => {
+                const link = generatedLinkEl.textContent;
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        if(copyBtn.textContent === 'Copied!') copyBtn.textContent = 'Copy Link';
+                    }, 2000);
+                } catch (err) {
+                    alert('Failed to copy. Please select the link and copy manually.');
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // --- Game Logic ---
+        function setupGame() {
+            renderBoard();
+            renderKeyboard();
+            
+            // Listen to physical keyboard events
+            document.addEventListener('keydown', handlePhysicalKeyboard);
+        }
+
+        function handlePhysicalKeyboard(e) {
+            if (gameStatus !== 'playing') return;
+            
+            // Ignore keystrokes when holding modifiers like Ctrl/Cmd
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            const key = e.key.toUpperCase();
+            
+            if (key === 'ENTER') {
+                handleVirtualKey('ENTER');
+            } else if (key === 'BACKSPACE' || key === 'DELETE') {
+                handleVirtualKey('BACKSPACE');
+            } else if (/^[A-Z]$/.test(key)) {
+                handleVirtualKey(key);
+            }
+        }
+
+        function handleVirtualKey(key) {
+            if (gameStatus !== 'playing') return;
+
+            if (key === 'ENTER') {
+                if (currentGuess.length !== wordLength) {
+                    showToast('Not enough letters');
+                    shakeCurrentRow();
+                    return;
+                }
+                submitGuess();
+            } else if (key === 'BACKSPACE') {
+                if (currentGuess.length > 0) {
+                    currentGuess = currentGuess.slice(0, -1);
+                    updateBoardUI();
+                }
+            } else { // Letter
+                if (currentGuess.length < wordLength) {
+                    currentGuess += key;
+                    updateBoardUI();
+                }
+            }
+        }
+
+        function submitGuess() {
+            const guessResult = evaluateGuess(currentGuess, targetWord);
+            
+            // Update known letter states for keyboard coloring
+            for (let i = 0; i < currentGuess.length; i++) {
+                const letter = currentGuess[i];
+                const status = guessResult[i];
+                // Priority: correct (green) > present (yellow) > absent (gray)
+                const currentStatus = letterStates[letter];
+                if (currentStatus !== 'correct') {
+                    if (status === 'correct') {
+                        letterStates[letter] = 'correct';
+                    } else if (status === 'present' && currentStatus !== 'present') {
+                        letterStates[letter] = 'present';
+                    } else if (status === 'absent' && !currentStatus) {
+                        letterStates[letter] = 'absent';
+                    }
+                }
+            }
+
+            guesses.push(currentGuess);
+            
+            // Check win/loss conditions
+            if (currentGuess === targetWord) {
+                gameStatus = 'won';
+                updateBoardUI();
+                updateKeyboardUI();
+                setTimeout(() => showToast('Excellent!', 3000), 100);
+            } else if (guesses.length >= maxGuesses) {
+                gameStatus = 'lost';
+                updateBoardUI();
+                updateKeyboardUI();
+                setTimeout(() => showToast(targetWord, -1), 100); // Persistent toast
+            } else {
+                currentGuess = '';
+                updateBoardUI();
+                updateKeyboardUI();
+            }
+        }
+
+        function evaluateGuess(guess, target) {
+            let result = Array(guess.length).fill('absent');
+            let targetLetters = target.split('');
+
+            // 1st pass: Exact matches
+            for (let i = 0; i < guess.length; i++) {
+                if (guess[i] === target[i]) {
+                    result[i] = 'correct';
+                    targetLetters[i] = null;
+                }
+            }
+
+            // 2nd pass: Present matches
+            for (let i = 0; i < guess.length; i++) {
+                if (result[i] !== 'correct') {
+                    let targetIndex = targetLetters.indexOf(guess[i]);
+                    if (targetIndex !== -1) {
+                        result[i] = 'present';
+                        targetLetters[targetIndex] = null;
+                    }
+                }
+            }
+            return result;
+        }
+
+        // --- Render UI ---
+        function renderBoard() {
+            boardEl.innerHTML = '';
+            boardEl.style.gridTemplateRows = `repeat(${maxGuesses}, 1fr)`;
+
+            for (let i = 0; i < maxGuesses; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex justify-center gap-1.5 w-full h-full';
+                row.id = `row-${i}`;
+
+                for (let j = 0; j < wordLength; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile w-full h-full border-2 border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 flex items-center justify-center';
+                    tile.id = `tile-${i}-${j}`;
+                    row.appendChild(tile);
+                }
+                boardEl.appendChild(row);
+            }
+        }
+
+        function updateBoardUI() {
+            for (let i = 0; i < maxGuesses; i++) {
+                const isCurrentRow = i === guesses.length;
+                const rowGuess = guesses[i] || (isCurrentRow ? currentGuess : '');
+                const evaluation = i < guesses.length ? evaluateGuess(guesses[i], targetWord) : [];
+
+                for (let j = 0; j < wordLength; j++) {
+                    const tile = document.getElementById(`tile-${i}-${j}`);
+                    const letter = rowGuess[j] || '';
+                    tile.textContent = letter;
+
+                    // Reset classes
+                    tile.className = 'tile w-full h-full border-2 flex items-center justify-center text-gray-900 dark:text-gray-100';
+
+                    if (letter) {
+                        tile.classList.add('border-gray-400', 'dark:border-gray-500');
+                        if (isCurrentRow) {
+                            tile.setAttribute('data-state', 'active');
+                        }
+                    } else {
+                        tile.classList.add('border-gray-300', 'dark:border-gray-600');
+                        tile.removeAttribute('data-state');
+                    }
+
+                    // Apply evaluation colors
+                    if (i < guesses.length) {
+                        tile.classList.remove('border-gray-400', 'dark:border-gray-500', 'border-gray-300', 'dark:border-gray-600');
+                        tile.classList.add('text-white', 'border-transparent');
+                        if (evaluation[j] === 'correct') {
+                            tile.classList.add('bg-wordle-green');
+                        } else if (evaluation[j] === 'present') {
+                            tile.classList.add('bg-wordle-yellow');
+                        } else {
+                            tile.classList.add('bg-wordle-gray');
+                        }
+                    }
+                }
+            }
+        }
+
+        function shakeCurrentRow() {
+            const currentRowIndex = guesses.length;
+            if (currentRowIndex >= maxGuesses) return;
+            const row = document.getElementById(`row-${currentRowIndex}`);
+            row.classList.remove('shake');
+            void row.offsetWidth; // Trigger reflow to restart animation
+            row.classList.add('shake');
+        }
+
+        function renderKeyboard() {
+            keyboardEl.innerHTML = '';
+            
+            keyboardLayout.forEach(rowArr => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'keyboard-row max-w-lg';
+                
+                rowArr.forEach(keyText => {
+                    const btn = document.createElement('button');
+                    btn.className = 'key bg-gray-200 dark:bg-wordle-keybgDark text-gray-900 dark:text-gray-100';
+                    btn.id = `key-${keyText}`;
+                    
+                    if (keyText === 'ENTER' || keyText === 'BACKSPACE') {
+                        btn.classList.add('large');
+                        if (keyText === 'BACKSPACE') {
+                            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>`;
+                        } else {
+                            btn.textContent = keyText;
+                        }
+                    } else {
+                        btn.textContent = keyText;
+                    }
+
+                    // Touch/Click listener for the virtual keyboard
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        handleVirtualKey(keyText);
+                    });
+
+                    rowDiv.appendChild(btn);
+                });
+                keyboardEl.appendChild(rowDiv);
+            });
+            updateKeyboardUI();
+        }
+
+        function updateKeyboardUI() {
+            Object.keys(letterStates).forEach(letter => {
+                const btn = document.getElementById(`key-${letter}`);
+                if (!btn) return;
+                
+                const status = letterStates[letter];
+                // Remove existing color classes
+                btn.className = btn.className.replace(/bg-\w+(-\w+)?/g, '').replace('text-gray-900', '').replace('dark:text-gray-100', '');
+                
+                // Keep base classes
+                btn.classList.add('key', 'text-white');
+                if (letter === 'ENTER' || letter === 'BACKSPACE') btn.classList.add('large');
+
+                // Apply new color
+                if (status === 'correct') {
+                    btn.classList.add('bg-wordle-green');
+                } else if (status === 'present') {
+                    btn.classList.add('bg-wordle-yellow');
+                } else if (status === 'absent') {
+                    btn.classList.add('bg-wordle-gray');
+                }
+            });
+        }
+
+        function showToast(message, duration = 2000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        if (toastContainer.contains(toast)) {
+                            toastContainer.removeChild(toast);
+                        }
+                    }, 500); // fade out duration
+                }, duration);
+            }
+        }
+
+        // Run setup
+        init();
+    </script>
+</body>
+</html>
