@@ -29,7 +29,7 @@
     // ==========================================
     // ⚠️ CONFIGURATION - UPDATE THIS URL ⚠️
     // ==========================================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuSOYBbgk8_Uetg2So-YAR535RCzoUSxoYQihjrUEh7DWEbMU1H9ojwTY71GMYigvg/exec'; 
+    const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'; 
 
     // --- MOCK DATA (Shows until connected to Google) ---
     const INITIAL_PHOTOS = [
@@ -191,6 +191,21 @@
     }
 
     function Feed({ photos, isLoading }) {
+      // Helper to convert Google Drive direct links into reliable thumbnail endpoint links
+      const getDriveImageUrl = (url) => {
+        if (!url) return '';
+        if (url.includes('drive.google.com/uc')) {
+          try {
+            // Extract the file ID and use the thumbnail endpoint (sz=w1000 ensures high quality)
+            const id = new URLSearchParams(url.split('?')[1]).get('id');
+            if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+          } catch (e) {
+            return url;
+          }
+        }
+        return url;
+      };
+
       if (isLoading && photos === INITIAL_PHOTOS) {
          return <div className="p-10 text-center text-gray-500">Loading feed from Google...</div>;
       }
@@ -217,7 +232,7 @@
                 {photo.approved && <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full"><IconCheck /> Approved</span>}
               </div>
               <div className="bg-gray-100 w-full aspect-square overflow-hidden flex items-center justify-center">
-                <img src={photo.imageUrl} alt={photo.caption} className="w-full h-full object-cover" loading="lazy" />
+                <img src={getDriveImageUrl(photo.imageUrl)} alt={photo.caption} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <div className="px-4 pt-3">
                 <span className="text-blue-600 font-medium text-sm mr-2">{photo.hashtag}</span>
