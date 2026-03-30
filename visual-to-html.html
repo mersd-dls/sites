@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual to HTML Generator</title>
+    <!-- Using Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* gray-600 */
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* gray-500 */
+        }
+        
+        /* Ensure inputs don't have outline when focused */
+        textarea:focus, [contenteditable="true"]:focus {
+            outline: none;
+        }
+
+        /* Resizer styles */
+        #resizer {
+            transition: background-color 0.2s;
+        }
+
+        /* Visual Editor Specific Styles */
+        #visual-editor {
+            font-family: system-ui, -apple-system, sans-serif;
+            color: #111827; /* gray-900 */
+        }
+        #visual-editor h1 { font-size: 2em; font-weight: bold; margin-bottom: 0.5em; margin-top: 0.5em; }
+        #visual-editor h2 { font-size: 1.5em; font-weight: bold; margin-bottom: 0.5em; margin-top: 0.5em; }
+        #visual-editor h3 { font-size: 1.17em; font-weight: bold; margin-bottom: 0.5em; margin-top: 0.5em; }
+        #visual-editor p { margin-bottom: 1em; }
+        #visual-editor ul { list-style-type: disc; margin-left: 2em; margin-bottom: 1em; }
+        #visual-editor ol { list-style-type: decimal; margin-left: 2em; margin-bottom: 1em; }
+        #visual-editor img { max-width: 100%; height: auto; border-radius: 0.25rem; margin-top: 0.5em; margin-bottom: 0.5em; }
+        #visual-editor a { color: #2563eb; text-decoration: underline; }
+
+        .toolbar-btn {
+            @apply p-1.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-center;
+        }
+        .toolbar-divider {
+            @apply w-px h-6 bg-gray-600 mx-1;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 h-screen flex flex-col overflow-hidden font-sans">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-gray-950 border-b border-gray-800 p-3 flex justify-between items-center shadow-md z-20">
+        <div class="flex items-center text-xl font-bold text-emerald-400">
+            <svg class="w-6 h-6 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Visual to HTML Generator
+        </div>
+        <div class="text-sm text-gray-400">
+            WYSIWYG Editor to Raw Code
+        </div>
+    </header>
+
+    <!-- Main Workspace (Split View) -->
+    <main id="workspace" class="flex-1 flex flex-row overflow-hidden relative">
+        
+        <!-- Left Panel: Visual Editor -->
+        <section id="editor-panel" class="flex flex-col h-full bg-gray-900 z-10" style="width: 50%;">
+            <!-- Visual Editor Header -->
+            <div class="bg-gray-800 p-2 border-b border-gray-700 flex justify-between items-center shadow-sm">
+                <div class="flex items-center text-sm font-medium text-gray-300 ml-2">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    Visual Editor
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="bg-gray-800 px-3 py-2 flex flex-wrap items-center gap-1 border-b border-gray-700">
+                <!-- Headings -->
+                <select id="formatBlock" class="bg-gray-700 text-sm text-gray-200 border-none rounded py-1 px-2 focus:ring-0 cursor-pointer">
+                    <option value="P">Paragraph</option>
+                    <option value="H1">Heading 1</option>
+                    <option value="H2">Heading 2</option>
+                    <option value="H3">Heading 3</option>
+                </select>
+                
+                <div class="toolbar-divider"></div>
+
+                <!-- Text Formatting -->
+                <button class="toolbar-btn" data-command="bold" title="Bold">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15.6 11.8c1-.7 1.6-1.8 1.6-3 0-2.3-1.9-4.1-4.1-4.1H6v14h7.5c2.3 0 4.2-1.9 4.2-4.2 0-1.4-.7-2.6-1.7-3.2l-.4.5zM8.5 6.5h4c1.1 0 2 .9 2 2s-.9 2-2 2h-4v-4zm0 10v-4h4.5c1.1 0 2 .9 2 2s-.9 2-2 2H8.5z"/></svg>
+                </button>
+                <button class="toolbar-btn" data-command="italic" title="Italic">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M10 5v3h2.2l-3.4 8H6v3h8v-3h-2.2l3.4-8H18V5h-8z"/></svg>
+                </button>
+                <button class="toolbar-btn" data-command="underline" title="Underline">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17c3.3 0 6-2.7 6-6V3h-2.5v8c0 1.9-1.6 3.5-3.5 3.5S8.5 12.9 8.5 11V3H6v8c0 3.3 2.7 6 6 6zm-7 2v2h14v-2H5z"/></svg>
+                </button>
+
+                <div class="toolbar-divider"></div>
+
+                <!-- Lists & Indent -->
+                <button class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path><circle cx="2" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="2" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="2" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
+                </button>
+                <button class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 6h14M7 12h14M7 18h14"></path><text x="1" y="8" font-size="6" fill="currentColor" stroke="none">1.</text><text x="1" y="14" font-size="6" fill="currentColor" stroke="none">2.</text><text x="1" y="20" font-size="6" fill="currentColor" stroke="none">3.</text></svg>
+                </button>
+                <button class="toolbar-btn" data-command="outdent" title="Decrease Indent">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M3 12h18M3 18h18M8 6l-4 6 4 6"></path></svg>
+                </button>
+                <button class="toolbar-btn" data-command="indent" title="Increase Indent">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M3 12h18M3 18h18M16 6l4 6-4 6"></path></svg>
+                </button>
+
+                <div class="toolbar-divider"></div>
+
+                <!-- Insertions -->
+                <button id="btn-insert-image" class="toolbar-btn" title="Insert Image">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Editor Content Area -->
+            <div class="flex-1 overflow-auto bg-gray-200">
+                <div id="visual-editor" contenteditable="true" class="min-h-full bg-white p-6 outline-none shadow-inner" placeholder="Start typing here...">
+                    <h1>Welcome to the Editor</h1>
+                    <p>Edit this content visually, and watch the <b>HTML code</b> generate on the right in real-time.</p>
+                    <ul>
+                        <li>Simple text formatting</li>
+                        <li>Headings and lists</li>
+                        <li>Images from URLs</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Divider / Resizer Handle -->
+        <div id="resizer" class="w-1.5 bg-gray-800 hover:bg-emerald-500 cursor-col-resize z-20 flex flex-col justify-center items-center group shadow-md border-x border-gray-900">
+            <div class="h-8 w-0.5 bg-gray-600 group-hover:bg-white rounded-full transition-colors"></div>
+        </div>
+
+        <!-- Right Panel: HTML Output -->
+        <section id="preview-panel" class="flex flex-col h-full flex-1 bg-gray-900 z-10 min-w-0">
+            <!-- Output Header -->
+            <div class="bg-gray-800 p-2 border-b border-gray-700 flex justify-between items-center shadow-sm">
+                <div class="flex items-center text-sm font-medium text-gray-300 ml-2">
+                    <svg class="w-4 h-4 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    Generated HTML Code
+                </div>
+                <button id="copy-btn" class="flex items-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 px-3 rounded transition-colors shadow-sm">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    </svg>
+                    <span id="copy-text">Copy HTML</span>
+                </button>
+            </div>
+            
+            <!-- Read-only Code Textarea -->
+            <textarea id="code-output" readonly class="flex-1 w-full p-4 bg-[#1e1e1e] text-emerald-400 font-mono text-sm leading-relaxed resize-none whitespace-pre border-none shadow-inner" spellcheck="false"></textarea>
+        </section>
+    </main>
+
+    <!-- Custom Modal for Image URL Input -->
+    <div id="image-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md border border-gray-700 overflow-hidden transform transition-all">
+            <div class="p-5 border-b border-gray-700">
+                <h3 class="text-lg font-medium text-white flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Insert Image
+                </h3>
+            </div>
+            <div class="p-5">
+                <label for="image-url-input" class="block text-sm font-medium text-gray-400 mb-2">Paste public image URL:</label>
+                <input type="text" id="image-url-input" class="block w-full px-3 py-2 rounded-md bg-gray-900 border border-gray-600 text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="https://example.com/image.jpg">
+            </div>
+            <div class="bg-gray-900 px-5 py-4 flex justify-end space-x-3">
+                <button id="cancel-image" class="px-4 py-2 bg-transparent text-gray-300 hover:text-white hover:bg-gray-800 rounded-md text-sm font-medium transition-colors">
+                    Cancel
+                </button>
+                <button id="confirm-image" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-500 rounded-md text-sm font-medium shadow-sm transition-colors">
+                    Insert
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const visualEditor = document.getElementById('visual-editor');
+            const codeOutput = document.getElementById('code-output');
+            const resizer = document.getElementById('resizer');
+            const editorPanel = document.getElementById('editor-panel');
+            const workspace = document.getElementById('workspace');
+            const copyBtn = document.getElementById('copy-btn');
+            const copyText = document.getElementById('copy-text');
+
+            // --- 1. WYSIWYG Editor Formatting Logic ---
+            
+            // Format HTML roughly to make it readable when outputted
+            function formatHTMLOutput(html) {
+                // Remove empty spaces at ends
+                let formatted = html.trim();
+                // Add basic newline spacing for block elements to make it readable, 
+                // avoiding deep complex indenting to preserve exact string layout
+                formatted = formatted.replace(/(<\/(div|p|h1|h2|h3|h4|h5|h6|ul|ol|li|table|tr|td|th)>)/gi, '$1\n');
+                formatted = formatted.replace(/(<(div|p|h1|h2|h3|h4|h5|h6|ul|ol|li|table|tr|td|th)[^>]*>)/gi, '\n$1');
+                // Remove extra empty lines
+                formatted = formatted.replace(/^\s*[\r\n]/gm, '');
+                return formatted;
+            }
+
+            // Sync visual editor content to code output
+            function syncToCode() {
+                const rawHTML = visualEditor.innerHTML;
+                codeOutput.value = formatHTMLOutput(rawHTML);
+            }
+
+            // Setup Toolbar Buttons
+            document.querySelectorAll('.toolbar-btn[data-command]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const command = btn.getAttribute('data-command');
+                    document.execCommand(command, false, null);
+                    visualEditor.focus();
+                    syncToCode();
+                });
+            });
+
+            // Setup Heading Dropdown
+            document.getElementById('formatBlock').addEventListener('change', function() {
+                document.execCommand('formatBlock', false, this.value);
+                visualEditor.focus();
+                syncToCode();
+                this.selectedIndex = 0; // Reset dropdown
+            });
+
+            // Monitor editor for any typing or changes (MutationObserver handles structural changes)
+            visualEditor.addEventListener('input', syncToCode);
+            visualEditor.addEventListener('keyup', syncToCode);
+
+            const observer = new MutationObserver(syncToCode);
+            observer.observe(visualEditor, { childList: true, subtree: true, characterData: true });
+
+            // Ensure editor takes focus correctly when clicked outside inner elements
+            document.querySelector('.bg-gray-200').addEventListener('click', (e) => {
+                if(e.target === document.querySelector('.bg-gray-200')) {
+                    visualEditor.focus();
+                }
+            });
+
+            // Initial Sync
+            syncToCode();
+
+            // --- 2. Copy Code Logic ---
+            copyBtn.addEventListener('click', () => {
+                codeOutput.select();
+                try {
+                    document.execCommand('copy');
+                    
+                    // Visual feedback
+                    const originalHTML = copyBtn.innerHTML;
+                    copyText.textContent = 'Copied!';
+                    copyBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                    copyBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHTML;
+                        copyBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+                        copyBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text', err);
+                }
+            });
+
+            // --- 3. Resizable Panels Logic ---
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault(); 
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                const containerRect = workspace.getBoundingClientRect();
+                let newWidth = e.clientX - containerRect.left;
+                
+                const minWidth = 200;
+                const maxWidth = containerRect.width - minWidth;
+                
+                if (newWidth < minWidth) newWidth = minWidth;
+                if (newWidth > maxWidth) newWidth = maxWidth;
+
+                const percentage = (newWidth / containerRect.width) * 100;
+                editorPanel.style.width = `${percentage}%`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = 'default';
+                }
+            });
+
+            // --- 4. Image Modal Logic ---
+            const imageBtn = document.getElementById('btn-insert-image');
+            const imageModal = document.getElementById('image-modal');
+            const imgUrlInput = document.getElementById('image-url-input');
+            const confirmImgBtn = document.getElementById('confirm-image');
+            const cancelImgBtn = document.getElementById('cancel-image');
+
+            // Save selection range before opening modal to restore it later
+            let savedRange = null;
+
+            function openImageModal() {
+                // Save cursor position
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    savedRange = selection.getRangeAt(0);
+                }
+                
+                imageModal.classList.remove('hidden');
+                imgUrlInput.value = '';
+                setTimeout(() => imgUrlInput.focus(), 100);
+            }
+
+            function closeImageModal() {
+                imageModal.classList.add('hidden');
+                visualEditor.focus();
+                
+                // Restore cursor position
+                if (savedRange) {
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(savedRange);
+                }
+            }
+
+            function executeImageInsert() {
+                const url = imgUrlInput.value.trim();
+                closeImageModal();
+                
+                if (url) {
+                    document.execCommand('insertImage', false, url);
+                    syncToCode();
+                }
+            }
+
+            imageBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                openImageModal();
+            });
+            cancelImgBtn.addEventListener('click', closeImageModal);
+            confirmImgBtn.addEventListener('click', executeImageInsert);
+
+            imgUrlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') executeImageInsert();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !imageModal.classList.contains('hidden')) {
+                    closeImageModal();
+                }
+            });
+            
+            imageModal.addEventListener('mousedown', (e) => {
+                if (e.target === imageModal) closeImageModal();
+            });
+        });
+    </script>
+</body>
+</html>
