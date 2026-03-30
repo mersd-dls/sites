@@ -29,7 +29,7 @@
     // ==========================================
     // ⚠️ CONFIGURATION - UPDATE THIS URL ⚠️
     // ==========================================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuSOYBbgk8_Uetg2So-YAR535RCzoUSxoYQihjrUEh7DWEbMU1H9ojwTY71GMYigvg/exec'; 
+    const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'; 
 
     // --- MOCK DATA (Shows until connected to Google) ---
     const INITIAL_PHOTOS = [
@@ -353,20 +353,20 @@
             ))}
           </div>
 
-          {activeEmojiId && activeEmoji ? (
+          <div className="bg-white p-3 border-b flex gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar items-center">
+            <span className="text-xs text-gray-500 font-medium px-2 flex items-center gap-1"><IconSmile /> Cover faces:</span>
+            {EMOJIS.map(emoji => (
+               <button key={emoji} onClick={() => { const id = Date.now().toString(); setEmojis([...emojis, {id, char: emoji, x: 50, y: 50, size: 60}]); setActiveEmojiId(id); }} className="w-10 h-10 flex-shrink-0 bg-gray-100 rounded-full flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">{emoji}</button>
+            ))}
+          </div>
+
+          {activeEmojiId && activeEmoji && (
             <div className="bg-gray-800 text-white p-4 flex items-center justify-between gap-4">
               <div className="flex-1 flex items-center gap-3">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Size</span>
                 <input type="range" min="20" max="150" value={activeEmoji.size} onChange={(e) => setEmojis(prev => prev.map(em => em.id === activeEmojiId ? { ...em, size: parseInt(e.target.value) } : em))} className="flex-1 accent-yellow-400" />
               </div>
               <button onClick={() => { setEmojis(prev => prev.filter(em => em.id !== activeEmojiId)); setActiveEmojiId(null); }} className="p-2 bg-red-500/20 text-red-400 rounded-full hover:bg-red-500/30 transition-colors"><IconTrash /></button>
-            </div>
-          ) : (
-            <div className="bg-white p-3 border-b flex gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar items-center">
-              <span className="text-xs text-gray-500 font-medium px-2 flex items-center gap-1"><IconSmile /> Cover faces:</span>
-              {EMOJIS.map(emoji => (
-                 <button key={emoji} onClick={() => { const id = Date.now().toString(); setEmojis([...emojis, {id, char: emoji, x: 50, y: 50, size: 60}]); setActiveEmojiId(id); }} className="w-10 h-10 flex-shrink-0 bg-gray-100 rounded-full flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">{emoji}</button>
-              ))}
             </div>
           )}
 
