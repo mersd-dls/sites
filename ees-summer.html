@@ -174,9 +174,9 @@
       return (
         <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center p-6">
           <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
-            <div className="text-6xl mb-4">🦆</div>
-            <h1 className="text-2xl font-bold text-blue-600 mb-2">EES Summer</h1>
-            <p className="text-gray-500 mb-6 text-sm">Enter the school password to view and share your summer adventures!</p>
+            <div className="text-6xl mb-4">🏖️</div>
+            <h1 className="text-2xl font-bold text-green-800 mb-2">EES SummerGram</h1>
+            <p className="text-gray-500 mb-6 text-sm">Enter the password to view and share your summer adventures!</p>
             <form onSubmit={(e) => { e.preventDefault(); onLogin(password); }} className="space-y-4">
               <input type="password" placeholder="Password (summer24)" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"/>
               <button type="submit" className="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 rounded-xl transition-colors">Enter Feed</button>
