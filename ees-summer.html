@@ -444,7 +444,7 @@
           </div>
 
           <div className="bg-white p-3 border-b flex gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar items-center">
-            <span className="text-xs text-gray-500 font-medium px-2 flex items-center gap-1"><IconSmile /> Cover faces:</span>
+            <span className="text-xs text-gray-500 font-medium px-2 flex items-center gap-1"><IconSmile /> Stickers:</span>
             {EMOJIS.map(emoji => (
                <button key={emoji} onClick={() => { const id = Date.now().toString(); setEmojis([...emojis, {id, char: emoji, x: 50, y: 50, size: 60}]); setActiveEmojiId(id); }} className="w-10 h-10 flex-shrink-0 bg-gray-100 rounded-full flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">{emoji}</button>
             ))}
