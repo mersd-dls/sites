@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Full Page Frame with Header</title>
+    <style>
+        /* Reset default margins and padding */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* Prevents the main page from scrolling */
+        }
+
+        /* Define your header height */
+        header {
+            height: 60px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        /* The iframe fills the remaining viewport height */
+        iframe {
+            width: 100%;
+            height: calc(100vh - 60px); /* Total viewport minus header height */
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Custom Header</h1>
+    </header>
+    <iframe src="https://flipchartconvert.onrender.com"></iframe>
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <title>Flipchart -> Slides Converter</title>
+    <style>
+        /* Reset default margins and padding */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* Prevents the main page from scrolling */
+        }
+
+        /* Define your header height */
+        header {
+            height: 60px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        /* The iframe fills the remaining viewport height */
+        iframe {
+            width: 100%;
+            height: calc(100vh - 60px); /* Total viewport minus header height */
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Flipchart -> Slides Converter (Engine can take up to 1 full minute to load)</h1>
+    </header>
+    <iframe src="https://flipchartconvert.onrender.com"></iframe>
+</body>
+</html>
