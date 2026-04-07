@@ -1,77 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Full Page Frame with Header</title>
+    <title>FlipChart Converter</title>
     <style>
-        /* Reset default margins and padding */
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden; /* Prevents the main page from scrolling */
-        }
-
-        /* Define your header height */
-        header {
-            height: 60px;
-            background-color: #333;
-            color: white;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-        }
-
-        /* The iframe fills the remaining viewport height */
-        iframe {
-            width: 100%;
-            height: calc(100vh - 60px); /* Total viewport minus header height */
-            border: none;
-            display: block;
-        }
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f9; }
+        .card { background: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; }
+        .button { background: #004b87; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 20px; }
+        .warning { color: #666; font-size: 0.9em; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>My Custom Header</h1>
-    </header>
-    <iframe src="https://flipchartconvert.onrender.com"></iframe>
-</body>
-</html><!DOCTYPE html>
-<html>
-<head>
-    <title>Flipchart -> Slides Converter</title>
-    <style>
-        /* Reset default margins and padding */
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden; /* Prevents the main page from scrolling */
-        }
+    <div class="card">
+        <h1>Flipchart -> Slides Converter</h1>
+        <p>Convert your Promethean .flipchart files to Google Slides.</p>
+        
+        <a href="https://flipchartconvert.onrender.com" class="button">Launch Conversion Tool</a>
+        
+        <p class="warning">
+            <strong>Note:</strong> This engine may take a moment to "wake up." Conversion times may vary depending on how many slides and images are in your original file
+        </p>
+    </div>
 
-        /* Define your header height */
-        header {
-            height: 60px;
-            background-color: #333;
-            color: white;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-        }
-
-        /* The iframe fills the remaining viewport height */
-        iframe {
-            width: 100%;
-            height: calc(100vh - 60px); /* Total viewport minus header height */
-            border: none;
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Flipchart -> Slides Converter (Engine can take up to 1 full minute to load)</h1>
-    </header>
-    <iframe src="https://flipchartconvert.onrender.com"></iframe>
+    <script>
+        // THE SECRET SAUCE:
+        // This "pokes" the Render server the moment the page loads
+        fetch('https://flipchartconvert.onrender.com', { mode: 'no-cors' })
+            .then(() => console.log("Wake-up signal sent to Render!"))
+            .catch(() => console.log("Waking up..."));
+    </script>
 </body>
 </html>
