@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live HTML Previewer</title>
-    <!-- Using Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom scrollbar for the editor */
@@ -32,11 +31,15 @@
         #resizer {
             transition: background-color 0.2s;
         }
+        
+        /* Checkbox styling fix for Tailwind without forms plugin */
+        input[type="checkbox"] {
+            accent-color: #3b82f6; /* blue-500 */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen flex flex-col overflow-hidden font-sans">
 
-    <!-- Top Navigation Bar -->
     <header class="bg-gray-950 border-b border-gray-800 p-3 flex justify-between items-center shadow-md z-20">
         <div class="flex items-center text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
             <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -49,12 +52,9 @@
         </div>
     </header>
 
-    <!-- Main Workspace (Split View) -->
     <main id="workspace" class="flex-1 flex flex-row overflow-hidden relative">
         
-        <!-- Left Panel: Code Editor -->
         <section id="editor-panel" class="flex flex-col h-full bg-gray-900 z-10" style="width: 50%;">
-            <!-- Editor Header -->
             <div class="bg-gray-800 p-2 border-b border-gray-700 flex justify-between items-center shadow-sm">
                 <div class="flex items-center text-sm font-medium text-gray-300 ml-2">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -62,26 +62,29 @@
                     </svg>
                     index.html
                 </div>
-                <button id="download-btn" class="flex items-center bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-1.5 px-3 rounded transition-colors shadow-sm">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    Download File
-                </button>
+                
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center text-xs font-medium text-gray-400 cursor-pointer hover:text-gray-200 transition-colors">
+                        <input type="checkbox" id="wrap-toggle" class="mr-2 w-3.5 h-3.5 rounded border-gray-600 bg-gray-700 text-blue-600">
+                        Soft Wrap
+                    </label>
+                    <button id="download-btn" class="flex items-center bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-1.5 px-3 rounded transition-colors shadow-sm">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download File
+                    </button>
+                </div>
             </div>
             
-            <!-- Editor Textarea -->
             <textarea id="code-editor" class="flex-1 w-full p-4 bg-gray-900 text-gray-200 font-mono text-sm leading-relaxed resize-none whitespace-pre border-none shadow-inner" spellcheck="false" placeholder="Write your HTML here..."></textarea>
         </section>
 
-        <!-- Divider / Resizer Handle -->
         <div id="resizer" class="w-1.5 bg-gray-800 hover:bg-blue-500 cursor-col-resize z-20 flex flex-col justify-center items-center group shadow-md border-x border-gray-900">
             <div class="h-8 w-0.5 bg-gray-600 group-hover:bg-white rounded-full transition-colors"></div>
         </div>
 
-        <!-- Right Panel: Live Preview -->
         <section id="preview-panel" class="flex flex-col h-full flex-1 bg-white z-10 min-w-0">
-            <!-- Preview Header -->
             <div class="bg-gray-800 p-2 border-b border-gray-700 flex items-center shadow-sm">
                 <div class="flex items-center text-sm font-medium text-gray-300 ml-2">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -92,14 +95,12 @@
                 </div>
             </div>
             
-            <!-- Iframe Container -->
             <div class="flex-1 w-full bg-checkerboard relative bg-white">
                 <iframe id="preview-frame" class="absolute inset-0 w-full h-full border-none bg-white"></iframe>
             </div>
         </section>
     </main>
 
-    <!-- Custom Modal for Filename Input -->
     <div id="download-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md border border-gray-700 overflow-hidden transform transition-all">
             <div class="p-5 border-b border-gray-700">
@@ -130,7 +131,6 @@
         </div>
     </div>
 
-    <!-- Application Logic -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const editor = document.getElementById('code-editor');
@@ -145,6 +145,9 @@
             const filenameInput = document.getElementById('filename-input');
             const confirmBtn = document.getElementById('confirm-download');
             const cancelBtn = document.getElementById('cancel-download');
+
+            // Wrap Toggle Element
+            const wrapToggle = document.getElementById('wrap-toggle');
 
             // 1. Initial Default Content
             const defaultHTML = `<!DOCTYPE html>
@@ -218,7 +221,18 @@
             // Initial render
             updatePreview();
 
-            // 3. Resizable Panels Logic
+            // 3. Soft Wrap Toggle Logic
+            wrapToggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    editor.classList.remove('whitespace-pre');
+                    editor.classList.add('whitespace-pre-wrap');
+                } else {
+                    editor.classList.remove('whitespace-pre-wrap');
+                    editor.classList.add('whitespace-pre');
+                }
+            });
+
+            // 4. Resizable Panels Logic
             let isResizing = false;
 
             resizer.addEventListener('mousedown', (e) => {
@@ -262,8 +276,7 @@
                 }
             });
 
-            // 4. Download Logic & Custom Modal
-            
+            // 5. Download Logic & Custom Modal
             function openModal() {
                 modal.classList.remove('hidden');
                 filenameInput.focus();
