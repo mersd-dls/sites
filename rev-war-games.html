@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Road to Revolution: Interactive Learning Game</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f7f5f0;
+            background-image: 
+                radial-gradient(#e5dec9 1px, transparent 1px), 
+                radial-gradient(#e5dec9 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        .serif-title {
+            font-family: 'Cinzel', serif;
+        }
+
+        .serif-body {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* 3D Flip Card Effect */
+        .flashcard-container {
+            perspective: 1000px;
+        }
+        
+        .flashcard-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        
+        .flashcard-container.is-flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-front, .flashcard-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbar for Historical Feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1ebd9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c3b593;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a3936c;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- Header / Navigation -->
+    <header class="bg-[#1e2d42] border-b-4 border-[#9c2a2a] text-[#f7f5f0] shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-[#9c2a2a] p-2 rounded-lg text-[#f7f5f0] shadow">
+                    <i data-lucide="compass" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-wider serif-title text-yellow-100">ROAD TO REVOLUTION</h1>
+                    <p class="text-xs text-slate-300">Interactive History Corner Game</p>
+                </div>
+            </div>
+            
+            <nav class="flex flex-wrap justify-center gap-1 sm:gap-2">
+                <button onclick="switchTab('study')" id="tab-study" class="nav-btn px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition bg-[#9c2a2a] text-white">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Study Cards
+                </button>
+                <button onclick="switchTab('match')" id="tab-match" class="nav-btn px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition hover:bg-[#2b3e56] text-slate-200">
+                    <i data-lucide="git-compare" class="w-4 h-4"></i> Match Game
+                </button>
+                <button onclick="switchTab('timeline')" id="tab-timeline" class="nav-btn px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition hover:bg-[#2b3e56] text-slate-200">
+                    <i data-lucide="milestone" class="w-4 h-4"></i> Timeline Sorter
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-quiz" class="nav-btn px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition hover:bg-[#2b3e56] text-slate-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Trivia Quest
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Arena -->
+    <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-grow">
+
+        <!-- ================= STUDY TAB ================= -->
+        <div id="panel-study" class="tab-panel block space-y-6">
+            <!-- Instructions and Category Controls -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#e2d9bf] flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1e2d42] serif-title flex items-center gap-2">
+                        <i data-lucide="sparkles" class="text-[#9c2a2a]"></i> Patriot Study Deck
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Flip the cards to master historical figures, vocabulary, taxes, and events of the Revolution!</p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block md:inline">Category:</label>
+                    <select id="category-filter" onchange="filterDeck()" class="bg-[#f7f5f0] border-2 border-[#e2d9bf] rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:border-[#9c2a2a] w-full md:w-auto">
+                        <option value="all">All Cards (27)</option>
+                        <option value="vocab">Vocabulary Terms</option>
+                        <option value="figures">Key Figures</option>
+                        <option value="acts">Acts & Taxes</option>
+                        <option value="events">Key Events</option>
+                        <option value="needs-work">Starred / Needs Work</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Card Showcase Viewport -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left: Sidebar Progress -->
+                <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-[#e2d9bf] space-y-4">
+                    <h3 class="font-bold text-slate-700 uppercase tracking-wider text-xs">Deck Progress</h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-500">Mastered Cards</span>
+                                <span id="mastery-count" class="text-emerald-600">0 / 27</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div id="mastery-progress-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-center pt-2">
+                            <div class="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-100">
+                                <div id="stats-mastered" class="text-lg font-bold text-emerald-700">0</div>
+                                <div class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">Mastered</div>
+                            </div>
+                            <div class="bg-amber-50/70 p-2.5 rounded-xl border border-amber-100">
+                                <div id="stats-needs-work" class="text-lg font-bold text-amber-700">0</div>
+                                <div class="text-[10px] text-amber-600 font-semibold uppercase tracking-wider">Need Practice</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <h4 class="font-semibold text-slate-700 text-sm mb-2 flex items-center gap-1">
+                            <i data-lucide="info" class="w-4 h-4 text-sky-600"></i> Keyboard Shortcuts
+                        </h4>
+                        <ul class="text-xs text-slate-500 space-y-1.5">
+                            <li><kbd class="px-1.5 py-0.5 bg-slate-100 rounded border">Space</kbd> or Click Card to Flip</li>
+                            <li><kbd class="px-1.5 py-0.5 bg-slate-100 rounded border">←</kbd> / <kbd class="px-1.5 py-0.5 bg-slate-100 rounded border">→</kbd> Previous / Next Card</li>
+                            <li><kbd class="px-1.5 py-0.5 bg-slate-100 rounded border">M</kbd> Mark as Mastered</li>
+                            <li><kbd class="px-1.5 py-0.5 bg-slate-100 rounded border">P</kbd> Mark as Need Practice</li>
+                        </ul>
+                    </div>
+
+                    <!-- Custom Hint Box (Sabrina's Corner) -->
+                    <div class="p-4 bg-[#fcf9f2] rounded-xl border-2 border-dashed border-[#c3b593] flex gap-3 items-start">
+                        <span class="text-2xl mt-0.5">🔔</span>
+                        <div>
+                            <h4 class="text-xs font-bold text-[#c3b593] uppercase tracking-wider">Sabrina's History Tip</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Turn on Text-to-Speech to listen to definitions read aloud. It's a great way to memorize details about Patriots and Loyalists!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Active Flashcard Play Area -->
+                <div class="lg:col-span-8 flex flex-col items-center">
+                    
+                    <!-- Flashcard 3D Container -->
+                    <div id="flashcard" onclick="flipCard()" class="flashcard-container w-full h-[320px] sm:h-[380px] cursor-pointer group mb-6">
+                        <div class="flashcard-inner relative w-full h-full rounded-2xl shadow-md border-4 border-[#e2d9bf] bg-white">
+                            
+                            <!-- Front Side -->
+                            <div class="flashcard-front absolute inset-0 p-6 sm:p-10 flex flex-col justify-between rounded-xl bg-white bg-[radial-gradient(#f7f5f0_1.5px,transparent_1.5px)] bg-[size:16px_16px]">
+                                <div class="flex justify-between items-start">
+                                    <span id="card-tag" class="bg-[#1e2d42] text-yellow-100 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Loading...</span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="speakText(event)" class="text-slate-400 hover:text-[#9c2a2a] p-1.5 hover:bg-slate-100 rounded-lg transition" title="Speak name">
+                                            <i data-lucide="volume-2" class="w-5 h-5"></i>
+                                        </button>
+                                        <span class="text-xs text-slate-400 font-bold" id="card-index">0 / 0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center my-auto px-4">
+                                    <h3 id="card-title" class="text-3xl sm:text-4xl font-extrabold text-[#1e2d42] serif-title tracking-tight leading-tight">...</h3>
+                                    <p class="text-xs text-slate-400 mt-3 flex items-center justify-center gap-1.5 uppercase font-semibold">
+                                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin-slow"></i> Tap card to flip & reveal description
+                                    </p>
+                                </div>
+
+                                <div class="flex justify-between items-center text-xs text-slate-400 font-medium">
+                                    <span class="flex items-center gap-1"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Identify this</span>
+                                    <span id="front-star" class="text-amber-400"><i data-lucide="star" class="w-4 h-4 fill-amber-400"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Back Side -->
+                            <div class="flashcard-back absolute inset-0 p-6 sm:p-10 flex flex-col justify-between rounded-xl bg-[#fcfbfa] overflow-y-auto">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-[#9c2a2a] uppercase tracking-wider">HISTORICAL FACT</span>
+                                    <button onclick="speakDescription(event)" class="text-slate-400 hover:text-[#9c2a2a] p-1.5 hover:bg-slate-100 rounded-lg transition" title="Speak description">
+                                        <i data-lucide="volume-2" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+
+                                <div class="my-auto px-2">
+                                    <p id="card-desc" class="text-base sm:text-lg text-slate-700 leading-relaxed text-center serif-body font-medium">
+                                        ...
+                                    </p>
+                                </div>
+
+                                <div class="flex justify-between items-center text-xs text-slate-400 font-medium border-t border-slate-100 pt-3">
+                                    <span class="flex items-center gap-1"><i data-lucide="info" class="w-3.5 h-3.5"></i> Explanation / Significance</span>
+                                    <span class="bg-[#e5dec9] text-[#5c5440] px-2 py-0.5 rounded font-bold">BACK</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Flashcard Controller Deck & Actions -->
+                    <div class="w-full flex flex-col gap-4">
+                        <div class="flex justify-between items-center gap-4">
+                            <button onclick="navigateDeck(-1)" class="bg-white hover:bg-slate-50 border-2 border-[#e2d9bf] text-slate-700 p-3 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-1 flex-1">
+                                <i data-lucide="arrow-left" class="w-5 h-5"></i> <span class="hidden sm:inline font-bold">Previous</span>
+                            </button>
+                            
+                            <button onclick="toggleMastery()" id="btn-mastery" class="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 flex-[2]">
+                                <i data-lucide="check-circle" class="w-5 h-5"></i> <span class="font-bold text-sm sm:text-base">Mastered!</span>
+                            </button>
+
+                            <button onclick="toggleNeedsWork()" id="btn-practice" class="bg-amber-500 hover:bg-amber-600 text-white p-3 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 flex-[2]">
+                                <i data-lucide="star" class="w-5 h-5"></i> <span class="font-bold text-sm sm:text-base">Need Practice</span>
+                            </button>
+
+                            <button onclick="navigateDeck(1)" class="bg-white hover:bg-slate-50 border-2 border-[#e2d9bf] text-slate-700 p-3 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-1 flex-1">
+                                <span class="hidden sm:inline font-bold">Next</span> <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= MATCHING TAB ================= -->
+        <div id="panel-match" class="tab-panel hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#e2d9bf] flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1e2d42] serif-title flex items-center gap-2">
+                        <i data-lucide="git-compare" class="text-[#9c2a2a]"></i> Patriot Matching Grid
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Match the historical figures, laws, and vocabulary with their descriptions. Clear the board!</p>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="text-right">
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Time Elapsed</div>
+                        <div id="match-timer" class="text-xl font-mono font-bold text-[#1e2d42]">00:00</div>
+                    </div>
+                    <button onclick="resetMatchGame()" class="bg-[#9c2a2a] hover:bg-[#801e1e] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Restart Game
+                    </button>
+                </div>
+            </div>
+
+            <!-- Matching Board Layout -->
+            <div id="match-board" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Tiles dynamically generated -->
+            </div>
+
+            <!-- Match Game Victory Modal / Overlay (Inline inside tab) -->
+            <div id="match-victory" class="hidden bg-emerald-50 border-2 border-emerald-200 p-8 rounded-2xl text-center space-y-4 max-w-lg mx-auto shadow-sm">
+                <div class="text-5xl">🏆</div>
+                <h3 class="text-2xl font-bold text-emerald-800 serif-title">Excellent Job, Patriot!</h3>
+                <p class="text-emerald-700">You successfully matched all the historical facts in <span id="match-final-time" class="font-bold text-lg">00:00</span>!</p>
+                <button onclick="resetMatchGame()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow inline-flex items-center gap-1.5">
+                    <i data-lucide="play" class="w-4 h-4"></i> Play Again
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= TIMELINE TAB ================= -->
+        <div id="panel-timeline" class="tab-panel hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#e2d9bf] flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1e2d42] serif-title flex items-center gap-2">
+                        <i data-lucide="milestone" class="text-[#9c2a2a]"></i> Road to the American Revolution
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Reconstruct Sabrina's History Timeline! Click a card, then select a timeline slot to arrange the 11 key events in chronological order (1754 to 1775).</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="checkTimeline()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-1.5">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i> Check Order
+                    </button>
+                    <button onclick="resetTimelineGame()" class="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sorter Playground -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Column: Source Cards Bank (Unordered Events) -->
+                <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-[#e2d9bf] space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h3 class="font-bold text-slate-700 text-sm">Event Bank</h3>
+                        <span id="bank-count" class="bg-[#f7f5f0] text-[#1e2d42] px-2 py-0.5 rounded text-xs font-bold">11 left</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Select an event below, then choose its correct place on the chronological track on the right.</p>
+                    
+                    <div id="timeline-bank" class="space-y-2 max-h-[450px] overflow-y-auto pr-1">
+                        <!-- Items generated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Timeline Chronology slots -->
+                <div class="lg:col-span-8 space-y-3">
+                    <h3 class="font-bold text-[#1e2d42] serif-title flex items-center gap-1.5 text-base px-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-[#9c2a2a]"></i> Chronological Timeline Track
+                    </h3>
+                    
+                    <div id="timeline-slots" class="space-y-2.5">
+                        <!-- 11 Slots dynamically generated -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= TRIVIA TAB ================= -->
+        <div id="panel-quiz" class="tab-panel hidden space-y-6">
+            <!-- Quiz Welcome Section -->
+            <div id="quiz-welcome" class="bg-white p-8 rounded-2xl shadow-sm border border-[#e2d9bf] text-center max-w-2xl mx-auto space-y-6">
+                <div class="bg-[#1e2d42] text-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-md">
+                    <i data-lucide="compass" class="w-8 h-8"></i>
+                </div>
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-bold text-[#1e2d42] serif-title">Revolutionary Trivia Quest</h2>
+                    <p class="text-slate-500 max-w-md mx-auto">Test your knowledge with 10 random trivia questions on the American Revolution. Earn badges based on your accuracy!</p>
+                </div>
+                
+                <div class="p-4 bg-[#fcf9f2] rounded-xl border border-[#c3b593] inline-flex items-center gap-3">
+                    <span class="text-xl">⭐</span>
+                    <span class="text-xs text-[#5c5440] font-bold uppercase tracking-wider">Perfect Prep for School Quizzes!</span>
+                </div>
+
+                <button onclick="startQuiz()" class="bg-[#9c2a2a] hover:bg-[#801e1e] text-[#f7f5f0] font-extrabold px-8 py-3.5 rounded-xl text-lg shadow-md hover:scale-105 active:scale-95 transition-all w-full sm:w-auto inline-flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5"></i> Start the Quest
+                </button>
+            </div>
+
+            <!-- Active Quiz Component -->
+            <div id="quiz-active" class="hidden max-w-2xl mx-auto space-y-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#e2d9bf] flex justify-between items-center">
+                    <span class="text-sm font-bold text-slate-500 uppercase">Question <span id="quiz-progress-txt">1/10</span></span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-slate-500">Score:</span>
+                        <span id="quiz-score-val" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">00</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-[#e2d9bf] space-y-6">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="quiz-progress-bar" class="bg-[#9c2a2a] h-full transition-all duration-300" style="width: 10%"></div>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h3 id="quiz-question" class="text-xl sm:text-2xl font-bold text-[#1e2d42] serif-title leading-snug">
+                        ...
+                    </h3>
+
+                    <!-- Choice Options Grid -->
+                    <div id="quiz-choices" class="grid grid-cols-1 gap-3 pt-2">
+                        <!-- Choices injected here -->
+                    </div>
+                </div>
+
+                <!-- Instant explanation card feedback -->
+                <div id="quiz-feedback-box" class="hidden p-5 rounded-2xl border transition-all duration-300">
+                    <!-- Feedback injected dynamically -->
+                </div>
+
+                <div class="flex justify-end">
+                    <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden bg-[#1e2d42] hover:bg-[#2c3f58] text-[#f7f5f0] px-6 py-3 rounded-xl font-bold shadow transition-all hover:translate-x-1 inline-flex items-center gap-1">
+                        Next Question <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Results Component -->
+            <div id="quiz-results" class="hidden bg-white p-8 rounded-2xl shadow-sm border border-[#e2d9bf] text-center max-w-xl mx-auto space-y-6">
+                <h2 class="text-3xl font-bold text-[#1e2d42] serif-title">Quest Completed!</h2>
+                
+                <div class="py-4">
+                    <div class="relative w-32 h-32 mx-auto flex items-center justify-center">
+                        <div class="absolute inset-0 border-4 border-[#e2d9bf] rounded-full"></div>
+                        <div id="result-badge-container" class="text-5xl">🎓</div>
+                    </div>
+                    <h3 id="result-grade-title" class="text-xl font-bold text-slate-700 mt-4">Commanding General</h3>
+                    <p class="text-sm text-slate-400 mt-1">Accuracy Score</p>
+                    <p id="result-score-fraction" class="text-4xl font-black text-[#9c2a2a] mt-2">10/10</p>
+                </div>
+
+                <div id="result-comment" class="text-sm text-slate-500 italic px-6">
+                    "Fascinating! You fought well and displayed expert knowledge of the American Revolution."
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-4 justify-center">
+                    <button onclick="startQuiz()" class="bg-[#9c2a2a] hover:bg-[#801e1e] text-white font-bold px-6 py-2.5 rounded-xl transition shadow flex items-center justify-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Play Again
+                    </button>
+                    <button onclick="switchTab('study')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-6 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="book-open" class="w-4 h-4"></i> Study Deck
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Interactive Footer with Credits -->
+    <footer class="bg-white border-t border-[#e2d9bf] py-6 text-center text-xs text-slate-500 mt-12">
+        <div class="max-w-6xl mx-auto px-4 space-y-2">
+            <p class="font-bold text-slate-600 uppercase tracking-widest text-[10px] serif-title">Historical Data Sourced from Sabrina's History Corner Document</p>
+            <p>&copy; 2026 Revolutionary Learning Commons. Handcrafted for Immersive History Education.</p>
+        </div>
+    </footer>
+
+    <!-- Sound Controller System -->
+    <script>
+        // Web Audio Synth for programmatic sounds
+        const playSynthSound = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(250, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'success') {
+                    osc.frequency.setValueAtTime(400, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.2);
+                } else if (type === 'flip') {
+                    osc.frequency.setValueAtTime(180, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.15);
+                } else if (type === 'correct') {
+                    // Double tone chord
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+                    osc2.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
+                    
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                    gain2.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain2.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                    
+                    osc.start();
+                    osc2.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                    osc2.stop(ctx.currentTime + 0.3);
+                } else if (type === 'error') {
+                    osc.frequency.setValueAtTime(180, ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(120, ctx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                }
+            } catch (e) {
+                // Ignore audio ctx failures
+            }
+        };
+    </script>
+
+    <!-- Master Database Script -->
+    <script>
+        const cardsData = [
+            // Vocabulary Terms
+            { id: 1, type: 'vocab', term: 'Patriot', desc: 'Wanted independence from England and to go to war.' },
+            { id: 2, type: 'vocab', term: 'Loyalist', desc: 'Wanted to stay a part of England, and they DID NOT want to go to war.' },
+            { id: 3, type: 'vocab', term: 'Tax', desc: 'Money that is paid to the government so that the government can pay for services for the citizens. Examples include paying soldiers, taking care of roads, building schools, paying police, fire and school employees.' },
+            { id: 4, type: 'vocab', term: 'Revolution', desc: 'When a government is suddenly changed. It usually begins with citizens fighting back against rules their government has in place and often involves war.' },
+            { id: 5, type: 'vocab', term: 'Amendment', desc: 'A change or addition to a law.' },
+            { id: 6, type: 'vocab', term: 'Rights', desc: 'Something that a person has or can do just by being born. Different from a privilege which has to be earned.' },
+            { id: 7, type: 'vocab', term: 'Boycott', desc: 'To refuse to buy a product or support a business. This is a form of protest.' },
+            { id: 8, type: 'vocab', term: 'Representative', desc: 'A person who is elected to speak for a person or group of people in government.' },
+            { id: 9, type: 'vocab', term: 'Militia', desc: 'An army that was made up of Patriot men who were ready to defend their freedom. Some militia members were called Minutemen who were meant to be ready to fight in a minute.' },
+
+            // Key Figures
+            { id: 10, type: 'figures', term: 'Samuel Adams', desc: 'Leader of the Patriots who helped to plan the Boston Tea Party and was a member of the Continental Congress.' },
+            { id: 11, type: 'figures', term: 'Sons of Liberty', desc: 'A group of men who formed to protest the taxes in the colonies. Members included Samuel Adams, John Hancock, Paul Revere, and Patrick Henry.' },
+            { id: 12, type: 'figures', term: 'Paul Revere & William Dawes', desc: 'Two patriots who rode through the night to warn people in Concord that the British soldiers were coming to take the weapons and ammunition stores.' },
+            { id: 13, type: 'figures', term: 'John Hancock', desc: 'A member of the Sons of Liberty and president of the Continental Congress and the first to sign the Declaration of Independence.' },
+            { id: 14, type: 'figures', term: 'John Adams', desc: 'An American Patriot who became the 2nd President. He was also the lawyer who defended the British soldiers after the Boston Massacre. He wrote letters to his wife, Abigail, that have been studied by historians.' },
+            { id: 15, type: 'figures', term: 'Abigail Adams', desc: 'An American Patriot who stayed home to take care of the children, farm, and home while her husband John was traveling. Her letters are studied to understand women\'s lives during the Revolution.' },
+            { id: 16, type: 'figures', term: 'Crispus Attucks', desc: 'A freed slave who was the first person killed as a result of the events at the Boston Massacre.' },
+
+            // Acts & Taxes / Documents
+            { id: 17, type: 'acts', term: 'The Constitution', desc: 'A document that sets up the plan for government and the rules for a country, state or city.' },
+            { id: 18, type: 'acts', term: 'The Declaration of Independence', desc: 'A document stating that the 13 colonies of America were now "Free and independent states." Thomas Jefferson wrote the first draft and John Hancock was the first to sign.' },
+            { id: 19, type: 'acts', term: 'The Bill of Rights', desc: 'The first 10 Amendments (changes) to the Constitution. These state the rights and freedoms of US citizens.' },
+            { id: 20, type: 'acts', term: 'Intolerable Acts', desc: 'Passed as a punishment for the Boston Tea Party. Closed Boston Harbor and forced colonists to house/feed British soldiers (Quartering Act) for free.' },
+            { id: 21, type: 'acts', term: 'Stamp Act', desc: 'A tax on all paper goods sold in the colonies.' },
+            { id: 22, type: 'acts', term: 'No Taxation Without Representation', desc: 'A popular phrase shouted by the Patriots during the events leading to the American Revolution, objecting to taxes made without colonists having a say.' },
+
+            // Key Events / Questions
+            { id: 23, type: 'events', term: 'Boston Massacre', desc: 'A group of colonists heckled British soldiers and threw snowballs. Soldiers fired into the crowd, killing 5 colonists and injuring 6 others.' },
+            { id: 24, type: 'events', term: 'Boston Tea Party', desc: 'A group of men dressed as Native Americans and dumped crates of tea overboard ships into Boston Harbor as a protest on tea taxes.' },
+            { id: 25, type: 'events', term: 'First Continental Congress', desc: 'A secret meeting between 12 colonies. They wrote a letter to King George III to complain about taxation without representation.' },
+            { id: 26, type: 'events', term: 'Battle of Bunker Hill', desc: 'The colonists lost, but many British soldiers died. It proved that the colonial forces could fight well!' },
+            { id: 27, type: 'events', term: 'Lexington & Concord', desc: 'Colonial weapons were stored in Concord. When British went to take them, a battle started on Lexington green. This was where the first gunshot of the Revolution was fired.' },
+            { id: 28, type: 'events', term: 'The Shot Heard Round the World', desc: 'The nickname of the official first shot fired to start the American Revolution. It is not clear if a colonial militiaman or a British soldier fired it.' },
+            { id: 29, type: 'events', term: 'France Assistance', desc: 'The country that helped the American colonies win the war against England.' },
+            { id: 30, type: 'events', term: 'Cause of Taxes', desc: 'King George and Parliament placed taxes on the colonists to pay for the French and Indian War and for colonial protection.' }
+        ];
+
+        // Timeline Sorter Data (Exactly matching Page 6 Timeline)
+        const timelineEvents = [
+            { id: 1, year: "1754", name: "French and Indian War", desc: "Start of conflict that led to heavy British war debt." },
+            { id: 2, year: "1763", name: "Proclamation of 1763", desc: "British decree prohibiting colonial settlement west of the Appalachians." },
+            { id: 3, year: "1764", name: "Sugar Act", desc: "First tax passed specifically to raise money in the colonies." },
+            { id: 4, year: "1765", name: "Stamp Act", desc: "First direct tax on colonist paper items, sparking widespread boycotts." },
+            { id: 5, year: "1766", name: "Declaratory Act", desc: "Parliament asserted supreme authority over the colonies." },
+            { id: 6, year: "1767", name: "Townshend Acts", desc: "Taxes placed on glass, lead, paper, paint, and tea imports." },
+            { id: 7, year: "1770", name: "Boston Massacre", desc: "Clash between redcoats and Boston mob resulting in 5 colonist deaths." },
+            { id: 8, year: "1773", name: "Tea Act", desc: "Allowed British East India Company to sell duty-free tea, hurting local merchants." },
+            { id: 9, year: "1773", name: "Boston Tea Party", desc: "Patriots dumped tea into the harbor to protest royal tea monopolies." },
+            { id: 10, year: "1774", name: "Intolerable Acts", desc: "Punitive laws restricting Massachusetts self-governance and closing Boston Harbor." },
+            { id: 11, year: "1775", name: "Lexington & Concord", desc: "First armed battles of the Revolution with the 'Shot Heard Round the World'." }
+        ];
+    </script>
+
+    <!-- State & Operations Controller -->
+    <script>
+        // Track states
+        let filteredDeck = [...cardsData];
+        let currentDeckIndex = 0;
+        let masteredCards = JSON.parse(localStorage.getItem('mastered_cards')) || [];
+        let needsWorkCards = JSON.parse(localStorage.getItem('needs_work_cards')) || [];
+
+        // Tab Swapping
+        function switchTab(tabId) {
+            playSynthSound('click');
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('block'));
+            
+            document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+            document.getElementById(`panel-${tabId}`).classList.add('block');
+
+            // Update tab styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-[#9c2a2a]', 'text-white');
+                btn.classList.add('hover:bg-[#2b3e56]', 'text-slate-200');
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('bg-[#9c2a2a]', 'text-white');
+            activeBtn.classList.remove('hover:bg-[#2b3e56]', 'text-slate-200');
+
+            // Boot appropriate game systems
+            if (tabId === 'match') {
+                resetMatchGame();
+            } else if (tabId === 'timeline') {
+                resetTimelineGame();
+            } else if (tabId === 'quiz') {
+                resetQuiz();
+            }
+        }
+
+        // ================= STUDY DECK FUNCTIONALITIES =================
+        function filterDeck() {
+            const filter = document.getElementById('category-filter').value;
+            if (filter === 'all') {
+                filteredDeck = [...cardsData];
+            } else if (filter === 'needs-work') {
+                filteredDeck = cardsData.filter(c => needsWorkCards.includes(c.id));
+            } else {
+                filteredDeck = cardsData.filter(c => c.type === filter);
+            }
+
+            currentDeckIndex = 0;
+            renderCard();
+            updateDeckStats();
+        }
+
+        function renderCard() {
+            const container = document.getElementById('flashcard');
+            container.classList.remove('is-flipped'); // reset to front
+
+            if (filteredDeck.length === 0) {
+                document.getElementById('card-title').textContent = "Empty Category";
+                document.getElementById('card-desc').textContent = "No cards matched your filter selection.";
+                document.getElementById('card-tag').textContent = "NONE";
+                document.getElementById('card-index').textContent = "0 / 0";
+                document.getElementById('front-star').classList.add('hidden');
+                return;
+            }
+
+            const activeCard = filteredDeck[currentDeckIndex];
+            document.getElementById('card-title').textContent = activeCard.term;
+            document.getElementById('card-desc').textContent = activeCard.desc;
+            
+            const tagEl = document.getElementById('card-tag');
+            tagEl.textContent = activeCard.type.toUpperCase();
+            
+            // color code tag
+            if (activeCard.type === 'vocab') tagEl.className = "bg-[#4361ee] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider";
+            if (activeCard.type === 'figures') tagEl.className = "bg-[#7209b7] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider";
+            if (activeCard.type === 'acts') tagEl.className = "bg-[#f72585] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider";
+            if (activeCard.type === 'events') tagEl.className = "bg-[#f3722c] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider";
+
+            document.getElementById('card-index').textContent = `${currentDeckIndex + 1} / ${filteredDeck.length}`;
+
+            // Update Mastery visual highlights
+            const isStarred = needsWorkCards.includes(activeCard.id);
+            const isMastered = masteredCards.includes(activeCard.id);
+
+            const starEl = document.getElementById('front-star');
+            if (isStarred) {
+                starEl.classList.remove('hidden');
+                document.getElementById('btn-practice').innerHTML = `<i data-lucide="star" class="w-5 h-5 fill-white"></i> <span class="font-bold">Starred</span>`;
+            } else {
+                starEl.classList.add('hidden');
+                document.getElementById('btn-practice').innerHTML = `<i data-lucide="star" class="w-5 h-5"></i> <span class="font-bold">Need Practice</span>`;
+            }
+
+            const masteryBtn = document.getElementById('btn-mastery');
+            if (isMastered) {
+                masteryBtn.className = "bg-emerald-800 hover:bg-emerald-900 text-white p-3 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 flex-[2]";
+                masteryBtn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5 fill-white"></i> <span class="font-bold">Mastered!</span>`;
+            } else {
+                masteryBtn.className = "bg-slate-300 hover:bg-slate-400 text-slate-700 p-3 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 flex-[2]";
+                masteryBtn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> <span class="font-bold">Mark Mastered</span>`;
+            }
+
+            lucide.createIcons();
+        }
+
+        function flipCard() {
+            playSynthSound('flip');
+            document.getElementById('flashcard').classList.toggle('is-flipped');
+        }
+
+        function navigateDeck(direction) {
+            playSynthSound('click');
+            if (filteredDeck.length === 0) return;
+            currentDeckIndex = (currentDeckIndex + direction + filteredDeck.length) % filteredDeck.length;
+            renderCard();
+        }
+
+        function toggleMastery() {
+            if (filteredDeck.length === 0) return;
+            const currentId = filteredDeck[currentDeckIndex].id;
+            
+            if (masteredCards.includes(currentId)) {
+                masteredCards = masteredCards.filter(id => id !== currentId);
+            } else {
+                masteredCards.push(currentId);
+                // remove from needs practice automatically if mastered
+                needsWorkCards = needsWorkCards.filter(id => id !== currentId);
+            }
+            
+            localStorage.setItem('mastered_cards', JSON.stringify(masteredCards));
+            localStorage.setItem('needs_work_cards', JSON.stringify(needsWorkCards));
+            
+            playSynthSound('success');
+            updateDeckStats();
+            renderCard();
+        }
+
+        function toggleNeedsWork() {
+            if (filteredDeck.length === 0) return;
+            const currentId = filteredDeck[currentDeckIndex].id;
+
+            if (needsWorkCards.includes(currentId)) {
+                needsWorkCards = needsWorkCards.filter(id => id !== currentId);
+            } else {
+                needsWorkCards.push(currentId);
+                // remove from mastered if practice is needed
+                masteredCards = masteredCards.filter(id => id !== currentId);
+            }
+
+            localStorage.setItem('mastered_cards', JSON.stringify(masteredCards));
+            localStorage.setItem('needs_work_cards', JSON.stringify(needsWorkCards));
+
+            playSynthSound('success');
+            updateDeckStats();
+            renderCard();
+        }
+
+        function updateDeckStats() {
+            const masteredCount = cardsData.filter(c => masteredCards.includes(c.id)).length;
+            const needsWorkCount = cardsData.filter(c => needsWorkCards.includes(c.id)).length;
+
+            document.getElementById('mastery-count').textContent = `${masteredCount} / ${cardsData.length}`;
+            const pct = (masteredCount / cardsData.length) * 100;
+            document.getElementById('mastery-progress-bar').style.width = `${pct}%`;
+
+            document.getElementById('stats-mastered').textContent = masteredCount;
+            document.getElementById('stats-needs-work').textContent = needsWorkCount;
+        }
+
+        // Keyboard Shortcut Observers
+        window.addEventListener('keydown', (e) => {
+            const activeTab = document.querySelector('.tab-panel:not(.hidden)').id;
+            if (activeTab !== 'panel-study') return; // only for study tab
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                flipCard();
+            } else if (e.code === 'ArrowLeft') {
+                navigateDeck(-1);
+            } else if (e.code === 'ArrowRight') {
+                navigateDeck(1);
+            } else if (e.key.toLowerCase() === 'm') {
+                toggleMastery();
+            } else if (e.key.toLowerCase() === 'p') {
+                toggleNeedsWork();
+            }
+        });
+
+        // Speech Synthesizers
+        function speakText(event) {
+            event.stopPropagation();
+            if (filteredDeck.length === 0) return;
+            const text = filteredDeck[currentDeckIndex].term;
+            speak(text);
+        }
+
+        function speakDescription(event) {
+            event.stopPropagation();
+            if (filteredDeck.length === 0) return;
+            const text = filteredDeck[currentDeckIndex].desc;
+            speak(text);
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 1.0;
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+
+        // ================= MATCHING GAME SYSTEM =================
+        let firstMatchSelectedTile = null;
+        let matchTimerInterval = null;
+        let matchSecondsElapsed = 0;
+        let matchedCount = 0;
+
+        function startMatchTimer() {
+            clearInterval(matchTimerInterval);
+            matchSecondsElapsed = 0;
+            matchTimerInterval = setInterval(() => {
+                matchSecondsElapsed++;
+                const min = String(Math.floor(matchSecondsElapsed / 60)).padStart(2, '0');
+                const sec = String(matchSecondsElapsed % 60).padStart(2, '0');
+                document.getElementById('match-timer').textContent = `${min}:${sec}`;
+            }, 1000);
+        }
+
+        function resetMatchGame() {
+            clearInterval(matchTimerInterval);
+            document.getElementById('match-timer').textContent = '00:00';
+            document.getElementById('match-board').innerHTML = '';
+            document.getElementById('match-victory').classList.add('hidden');
+            document.getElementById('match-board').classList.remove('hidden');
+            firstMatchSelectedTile = null;
+            matchedCount = 0;
+            
+            // Pick 4 random cards
+            const shuffled = [...cardsData].sort(() => 0.5 - Math.random());
+            const selection = shuffled.slice(0, 4);
+
+            // Double the selection (1 Term tile, 1 definition tile per card)
+            let tiles = [];
+            selection.forEach(card => {
+                tiles.push({ id: card.id, text: card.term, type: 'term' });
+                tiles.push({ id: card.id, text: card.desc, type: 'definition' });
+            });
+
+            // Shuffle tiles
+            tiles.sort(() => 0.5 - Math.random());
+
+            // Build board UI
+            const board = document.getElementById('match-board');
+            tiles.forEach((tile, index) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.dataset.id = tile.id;
+                cardDiv.dataset.type = tile.type;
+                cardDiv.className = "bg-white border-2 border-[#e2d9bf] hover:border-[#1e2d42] cursor-pointer p-4 rounded-xl min-h-[110px] flex items-center justify-center text-center transition-all shadow-sm hover:shadow active:scale-98 select-none";
+                
+                // Adjust text styling based on content length
+                const isLong = tile.text.length > 50;
+                cardDiv.innerHTML = `<p class="${isLong ? 'text-xs text-slate-600 leading-snug' : 'font-bold text-sm text-[#1e2d42]'}">${tile.text}</p>`;
+                
+                cardDiv.addEventListener('click', () => handleMatchSelection(cardDiv));
+                board.appendChild(cardDiv);
+            });
+
+            startMatchTimer();
+            lucide.createIcons();
+        }
+
+        function handleMatchSelection(el) {
+            if (el.classList.contains('bg-emerald-100') || el.classList.contains('pointer-events-none')) {
+                return; // already matched
+            }
+
+            playSynthSound('click');
+
+            // Toggle select class
+            if (firstMatchSelectedTile === el) {
+                el.className = el.className.replace('border-sky-500 bg-sky-50 shadow-md scale-102', 'border-[#e2d9bf]');
+                firstMatchSelectedTile = null;
+                return;
+            }
+
+            if (!firstMatchSelectedTile) {
+                // First tile selection
+                firstMatchSelectedTile = el;
+                el.className = el.className.replace('border-[#e2d9bf]', 'border-sky-500 bg-sky-50 shadow-md scale-102');
+            } else {
+                // Second tile selection
+                const prev = firstMatchSelectedTile;
+                const prevId = prev.dataset.id;
+                const prevType = prev.dataset.type;
+                
+                const curId = el.dataset.id;
+                const curType = el.dataset.type;
+
+                // Validate matching pair
+                if (prevId === curId && prevType !== curType) {
+                    // MATCH HIT!
+                    playSynthSound('correct');
+                    prev.className = "bg-emerald-50 border-2 border-emerald-400 text-emerald-800 cursor-default p-4 rounded-xl min-h-[110px] flex items-center justify-center text-center pointer-events-none scale-100 transition-all opacity-80";
+                    el.className = "bg-emerald-50 border-2 border-emerald-400 text-emerald-800 cursor-default p-4 rounded-xl min-h-[110px] flex items-center justify-center text-center pointer-events-none scale-100 transition-all opacity-80";
+                    matchedCount += 2;
+
+                    // Clear first pointer
+                    firstMatchSelectedTile = null;
+
+                    if (matchedCount === 8) {
+                        // Game Won!
+                        clearInterval(matchTimerInterval);
+                        setTimeout(() => {
+                            playSynthSound('success');
+                            document.getElementById('match-board').classList.add('hidden');
+                            document.getElementById('match-victory').classList.remove('hidden');
+                            document.getElementById('match-final-time').textContent = document.getElementById('match-timer').textContent;
+                        }, 500);
+                    }
+                } else {
+                    // MISMATCH!
+                    playSynthSound('error');
+                    el.className = el.className.replace('border-[#e2d9bf]', 'border-rose-400 bg-rose-50 shake');
+                    prev.className = prev.className.replace('border-sky-500 bg-sky-50', 'border-rose-400 bg-rose-50 shake');
+                    
+                    // Freeze action, then reset styles
+                    document.getElementById('match-board').style.pointerEvents = 'none';
+                    setTimeout(() => {
+                        el.className = el.className.replace('border-rose-400 bg-rose-50 shake', 'border-[#e2d9bf]');
+                        prev.className = prev.className.replace('border-rose-400 bg-rose-50 shake', 'border-[#e2d9bf]');
+                        document.getElementById('match-board').style.pointerEvents = 'auto';
+                        firstMatchSelectedTile = null;
+                    }, 1000);
+                }
+            }
+        }
+
+
+        // ================= TIMELINE SORTER GAME =================
+        let selectedBankCard = null;
+        let timelineState = Array(11).fill(null); // stores active card mappings
+
+        function resetTimelineGame() {
+            selectedBankCard = null;
+            timelineState = Array(11).fill(null);
+            
+            // Clear interfaces
+            document.getElementById('timeline-bank').innerHTML = '';
+            document.getElementById('timeline-slots').innerHTML = '';
+
+            // 1. Render all 11 slots sequentially
+            const slotsContainer = document.getElementById('timeline-slots');
+            timelineEvents.forEach((ev, idx) => {
+                const slotDiv = document.createElement('div');
+                slotDiv.dataset.index = idx;
+                slotDiv.className = "timeline-slot bg-white border-2 border-[#e2d9bf] hover:border-[#1e2d42] p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition cursor-pointer relative overflow-hidden";
+                slotDiv.addEventListener('click', () => handleTimelineSlotClick(idx));
+                
+                slotDiv.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <span class="bg-[#1e2d42] text-yellow-100 font-mono font-bold text-xs w-8 h-8 rounded-full flex items-center justify-center border border-yellow-200/20">${idx + 1}</span>
+                        <div>
+                            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Position ${idx + 1} (${ev.year})</span>
+                            <div class="slot-content text-slate-400 font-medium italic text-sm mt-0.5">Empty Slot</div>
+                        </div>
+                    </div>
+                    <div class="slot-actions flex items-center gap-2"></div>
+                `;
+                slotsContainer.appendChild(slotDiv);
+            });
+
+            // 2. Render randomized event cards in the left bank
+            const randomizedEvents = [...timelineEvents].sort(() => 0.5 - Math.random());
+            const bankContainer = document.getElementById('timeline-bank');
+            randomizedEvents.forEach(ev => {
+                const cardDiv = document.createElement('div');
+                cardDiv.dataset.id = ev.id;
+                cardDiv.className = "timeline-bank-card bg-[#fcfbfa] hover:bg-white border-2 border-[#e2d9bf] hover:border-sky-500 cursor-pointer p-3 rounded-xl transition-all shadow-sm flex flex-col gap-1 select-none active:scale-98";
+                cardDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-sm text-[#1e2d42]">${ev.name}</h4>
+                        <span class="text-slate-400 text-xs font-bold font-mono">${ev.year}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">${ev.desc}</p>
+                `;
+                cardDiv.addEventListener('click', () => handleTimelineBankCardSelect(cardDiv, ev));
+                bankContainer.appendChild(cardDiv);
+            });
+
+            updateBankCounter();
+            lucide.createIcons();
+        }
+
+        function handleTimelineBankCardSelect(el, ev) {
+            playSynthSound('click');
+            
+            // Toggle highlight
+            document.querySelectorAll('.timeline-bank-card').forEach(c => c.classList.remove('border-sky-500', 'bg-sky-50/50', 'scale-[1.01]', 'shadow'));
+            
+            if (selectedBankCard === ev) {
+                selectedBankCard = null;
+                return;
+            }
+
+            selectedBankCard = ev;
+            el.classList.add('border-sky-500', 'bg-sky-50/50', 'scale-[1.01]', 'shadow');
+        }
+
+        function handleTimelineSlotClick(slotIdx) {
+            if (!selectedBankCard) {
+                // If clicked a filled slot, remove/return it back to the bank
+                if (timelineState[slotIdx]) {
+                    playSynthSound('click');
+                    const returnedCard = timelineState[slotIdx];
+                    timelineState[slotIdx] = null;
+                    
+                    // Recreate bank card UI element
+                    createBankCard(returnedCard);
+                    updateTimelineSlotUI(slotIdx, null);
+                    updateBankCounter();
+                }
+                return;
+            }
+
+            // Put selected bank card into target slot
+            playSynthSound('click');
+
+            // If target slot is already full, swap/return existing back first
+            if (timelineState[slotIdx]) {
+                const existing = timelineState[slotIdx];
+                createBankCard(existing);
+            }
+
+            // Assign new card to state
+            timelineState[slotIdx] = selectedBankCard;
+
+            // Remove selected element from DOM bank
+            const bankCardEl = document.querySelector(`.timeline-bank-card[data-id="${selectedBankCard.id}"]`);
+            if (bankCardEl) bankCardEl.remove();
+
+            // Refresh slot presentation
+            updateTimelineSlotUI(slotIdx, selectedBankCard);
+
+            // Clean state selection
+            selectedBankCard = null;
+            updateBankCounter();
+        }
+
+        function createBankCard(ev) {
+            const cardDiv = document.createElement('div');
+            cardDiv.dataset.id = ev.id;
+            cardDiv.className = "timeline-bank-card bg-[#fcfbfa] hover:bg-white border-2 border-[#e2d9bf] hover:border-sky-500 cursor-pointer p-3 rounded-xl transition-all shadow-sm flex flex-col gap-1 select-none active:scale-98";
+            cardDiv.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <h4 class="font-bold text-sm text-[#1e2d42]">${ev.name}</h4>
+                    <span class="text-slate-400 text-xs font-bold font-mono">${ev.year}</span>
+                </div>
+                <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">${ev.desc}</p>
+            `;
+            cardDiv.addEventListener('click', () => handleTimelineBankCardSelect(cardDiv, ev));
+            document.getElementById('timeline-bank').appendChild(cardDiv);
+        }
+
+        function updateTimelineSlotUI(slotIdx, ev) {
+            const slotEl = document.querySelectorAll('.timeline-slot')[slotIdx];
+            const contentEl = slotEl.querySelector('.slot-content');
+            const actionEl = slotEl.querySelector('.slot-actions');
+            
+            // Clear classes
+            slotEl.className = "timeline-slot bg-white border-2 border-[#e2d9bf] hover:border-[#1e2d42] p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition cursor-pointer relative overflow-hidden";
+
+            if (ev) {
+                slotEl.classList.add('border-slate-400', 'bg-slate-50/30');
+                contentEl.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <strong class="text-sm text-[#1e2d42]">${ev.name}</strong>
+                        <span class="bg-[#e5dec9] text-[#5c5440] font-mono font-bold text-xs px-1.5 py-0.5 rounded">${ev.year}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">${ev.desc}</p>
+                `;
+                actionEl.innerHTML = `
+                    <button class="text-slate-400 hover:text-rose-500 p-1 hover:bg-slate-100 rounded transition" title="Remove event">
+                        <i data-lucide="x-circle" class="w-5 h-5"></i>
+                    </button>
+                `;
+            } else {
+                contentEl.innerHTML = `Empty Slot`;
+                contentEl.className = "slot-content text-slate-400 font-medium italic text-sm mt-0.5";
+                actionEl.innerHTML = "";
+            }
+            lucide.createIcons();
+        }
+
+        function updateBankCounter() {
+            const count = document.getElementById('timeline-bank').childElementCount;
+            document.getElementById('bank-count').textContent = `${count} left`;
+        }
+
+        function checkTimeline() {
+            let correctCount = 0;
+            const slots = document.querySelectorAll('.timeline-slot');
+
+            slots.forEach((slotEl, idx) => {
+                const assigned = timelineState[idx];
+                
+                // Clear state styling
+                slotEl.className = "timeline-slot p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition cursor-pointer relative overflow-hidden border-2";
+
+                if (!assigned) {
+                    slotEl.classList.add('border-slate-200', 'bg-white');
+                    return;
+                }
+
+                // Match based on id sequence (1 to 11 chronological)
+                if (assigned.id === idx + 1) {
+                    correctCount++;
+                    slotEl.classList.add('border-emerald-400', 'bg-emerald-50/40');
+                } else {
+                    slotEl.classList.add('border-rose-400', 'bg-rose-50/40');
+                }
+            });
+
+            if (correctCount === 11) {
+                playSynthSound('success');
+                alert("Spectacular! All 11 historical events have been correctly cataloged chronologically on Sabrina's Road to the Revolution!");
+            } else {
+                playSynthSound('error');
+            }
+        }
+
+
+        // ================= QUIZ QUEST SYSTEM =================
+        let quizActiveDeck = [];
+        let quizCurrentIndex = 0;
+        let quizScore = 0;
+        let selectedOptionText = '';
+
+        function startQuiz() {
+            playSynthSound('click');
+            
+            // Hide layouts
+            document.getElementById('quiz-welcome').classList.add('hidden');
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-active').classList.remove('hidden');
+
+            quizScore = 0;
+            quizCurrentIndex = 0;
+            document.getElementById('quiz-score-val').textContent = "0";
+
+            // Compile 10 random cards
+            quizActiveDeck = [...cardsData].sort(() => 0.5 - Math.random()).slice(0, 10);
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            document.getElementById('quiz-feedback-box').classList.add('hidden');
+            document.getElementById('quiz-next-btn').classList.add('hidden');
+            document.getElementById('quiz-progress-txt').textContent = `${quizCurrentIndex + 1} / 10`;
+            document.getElementById('quiz-progress-bar').style.width = `${((quizCurrentIndex + 1) / 10) * 100}%`;
+
+            const card = quizActiveDeck[quizCurrentIndex];
+            
+            // Build question stem
+            document.getElementById('quiz-question').textContent = `What is the correct match/description for: "${card.term}"?`;
+
+            // Build choices (1 correct + 3 random decoys)
+            let decoys = cardsData.filter(c => c.id !== card.id).sort(() => 0.5 - Math.random()).slice(0, 3);
+            let choices = [card, ...decoys].sort(() => 0.5 - Math.random());
+
+            const choicesContainer = document.getElementById('quiz-choices');
+            choicesContainer.innerHTML = '';
+
+            choices.forEach((choice, index) => {
+                const btn = document.createElement('button');
+                btn.className = "quiz-choice-btn w-full bg-[#fcfbfa] hover:bg-white text-left p-4 rounded-xl border-2 border-[#e2d9bf] hover:border-[#1e2d42] transition-all duration-150 flex items-start gap-3 select-none hover:shadow-sm";
+                btn.innerHTML = `
+                    <span class="bg-slate-200 text-slate-700 font-mono font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">${String.fromCharCode(65 + index)}</span>
+                    <p class="text-sm font-medium text-slate-700">${choice.desc}</p>
+                `;
+                btn.addEventListener('click', () => submitQuizAnswer(btn, choice.id === card.id, card));
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function submitQuizAnswer(selectedBtn, isCorrect, correctCard) {
+            // Lock other options
+            document.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+                btn.style.pointerEvents = 'none';
+            });
+
+            const feedback = document.getElementById('quiz-feedback-box');
+            feedback.classList.remove('hidden');
+
+            if (isCorrect) {
+                playSynthSound('correct');
+                selectedBtn.className = "quiz-choice-btn w-full text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 flex items-start gap-3";
+                quizScore++;
+                document.getElementById('quiz-score-val').textContent = quizScore;
+                
+                feedback.className = "p-5 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-800 space-y-1";
+                feedback.innerHTML = `
+                    <div class="flex items-center gap-1 text-sm font-bold uppercase tracking-wider"><i data-lucide="check-circle" class="w-4 h-4"></i> Correct Answer!</div>
+                    <p class="text-xs leading-relaxed mt-1">Excellent work. You successfully recognized <strong>${correctCard.term}</strong>.</p>
+                `;
+            } else {
+                playSynthSound('error');
+                selectedBtn.className = "quiz-choice-btn w-full text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-50 flex items-start gap-3";
+                
+                feedback.className = "p-5 rounded-2xl border bg-rose-50 border-rose-200 text-rose-800 space-y-1";
+                feedback.innerHTML = `
+                    <div class="flex items-center gap-1 text-sm font-bold uppercase tracking-wider"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Incorrect</div>
+                    <p class="text-xs leading-relaxed mt-1">The correct definition for <strong>${correctCard.term}</strong> is: <em>"${correctCard.desc}"</em></p>
+                `;
+            }
+
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function nextQuizQuestion() {
+            playSynthSound('click');
+            quizCurrentIndex++;
+            if (quizCurrentIndex < 10) {
+                renderQuizQuestion();
+            } else {
+                showQuizResults();
+            }
+        }
+
+        function showQuizResults() {
+            document.getElementById('quiz-active').classList.add('hidden');
+            document.getElementById('quiz-results').classList.remove('hidden');
+
+            document.getElementById('result-score-fraction').textContent = `${quizScore} / 10`;
+
+            const badgeEl = document.getElementById('result-badge-container');
+            const titleEl = document.getElementById('result-grade-title');
+            const commentEl = document.getElementById('result-comment');
+
+            if (quizScore === 10) {
+                badgeEl.textContent = "⭐";
+                titleEl.textContent = "Commander-in-Chief";
+                commentEl.textContent = '"A flawless campaign! George Washington would be proud of your strategic brilliance."';
+            } else if (quizScore >= 8) {
+                badgeEl.textContent = "🦅";
+                titleEl.textContent = "Revolutionary Patriot";
+                commentEl.textContent = '"Outstanding efforts! Your commitment to liberty has proven successful on the battlefield of history."';
+            } else if (quizScore >= 5) {
+                badgeEl.textContent = "📜";
+                titleEl.textContent = "Committee of Safety";
+                commentEl.textContent = '"Good effort, Minuteman. A little more study at the Liberty Tree and you will be ready for the frontline."';
+            } else {
+                badgeEl.textContent = "🇬🇧";
+                titleEl.textContent = "Royalist Clerk";
+                commentEl.textContent = '"Back to the library! Spend some more time with the study flashcards to help fuel the flame of revolution."';
+            }
+        }
+
+        function resetQuiz() {
+            document.getElementById('quiz-active').classList.add('hidden');
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-welcome').classList.remove('hidden');
+        }
+
+        // --- Initial Bootloader ---
+        window.onload = function() {
+            updateDeckStats();
+            renderCard();
+        }
+    </script>
+</body>
+</html>
