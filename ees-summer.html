@@ -25,7 +25,7 @@
     // ==========================================
     // ⚠️ CONFIGURATION - UPDATE THIS URL ⚠️
     // ==========================================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlbTmL0OYzhHNYRc-OFsynyec25wtHuYwgJAhhixFkBHfB83dOW80TNcWXT-9i4zlt/exec'; 
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuSOYBbgk8_Uetg2So-YAR535RCzoUSxoYQihjrUEh7DWEbMU1H9ojwTY71GMYigvg/exec'; 
 
     const INITIAL_PHOTOS = [];
     const HASHTAGS = ['#EESSummer', '#DuckAdventures', '#RubberDuck', '#EESFamily', '#SummerReading'];
@@ -221,6 +221,16 @@
         return url;
       };
 
+      // Helper to get the first letter, ignoring "The "
+      const getInitial = (name) => {
+        if (!name) return 'E';
+        let clean = name.trim();
+        if (clean.toLowerCase().startsWith('the ')) {
+          clean = clean.substring(4).trim();
+        }
+        return clean.charAt(0).toUpperCase() || 'E';
+      };
+
       if (isLoading && photos.length === 0) return <FeedSkeleton />;
       
       if (photos.length === 0) {
@@ -240,7 +250,9 @@
             <article key={photo.id} className="border-b border-gray-100 pb-4 mb-4 fade-in">
               <div className="px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-lg">🦆</div>
+                  <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm">
+                    {getInitial(photo.name || 'EES Family')}
+                  </div>
                   <div>
                     {/* Updated to display the custom name, defaulting back to EES Family if it doesn't exist */}
                     <span className="font-semibold text-sm">{photo.name || 'EES Family'}</span>
