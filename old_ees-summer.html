@@ -64,6 +64,7 @@
       }, [view, isAuthenticated]);
 
       const fetchLivePhotos = async () => {
+        // Check session storage first for instant loading
         const cachedPhotos = sessionStorage.getItem('ees_photos_cache');
         if (cachedPhotos) {
             setPhotos(JSON.parse(cachedPhotos));
@@ -77,6 +78,7 @@
           const data = await response.json();
           if (data.photos) {
             setPhotos(data.photos);
+            // Save to cache for next time
             sessionStorage.setItem('ees_photos_cache', JSON.stringify(data.photos));
           }
         } catch (error) {
@@ -114,14 +116,14 @@
               action: 'upload',
               imageBase64: newPhoto.imageUrl,
               caption: newPhoto.caption,
-              hashtag: newPhoto.hashtag,
-              name: newPhoto.name // Sending the new name field
+              hashtag: newPhoto.hashtag
             })
           });
           
           const result = await response.json();
           if (result.success) {
              setToastMessage('Success! Photo sent to moderation team.');
+             // Clear cache so it fetches fresh data next time
              sessionStorage.removeItem('ees_photos_cache'); 
           } else {
              setToastMessage('Oops! There was an error uploading.');
@@ -208,6 +210,7 @@
     }
 
     function Feed({ photos, isLoading }) {
+      // Manage how many photos to show at once
       const [visibleCount, setVisibleCount] = useState(5);
 
       const getDriveImageUrl = (url) => {
@@ -215,13 +218,16 @@
         if (url.includes('drive.google.com/uc')) {
           try {
             const id = new URLSearchParams(url.split('?')[1]).get('id');
+            // Changed sz=w1000 to sz=w600 for massively faster loading
             if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w600`;
           } catch (e) { return url; }
         }
         return url;
       };
 
-      if (isLoading && photos.length === 0) return <FeedSkeleton />;
+      if (isLoading && photos.length === 0) {
+         return <FeedSkeleton />;
+      }
       
       if (photos.length === 0) {
         return (
@@ -232,6 +238,7 @@
         );
       }
 
+      // Only slice the photos we want to show
       const visiblePhotos = photos.slice(0, visibleCount);
 
       return (
@@ -242,8 +249,7 @@
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-lg">🦆</div>
                   <div>
-                    {/* Updated to display the custom name, defaulting back to EES Family if it doesn't exist */}
-                    <span className="font-semibold text-sm">{photo.name || 'EES Family'}</span>
+                    <span className="font-semibold text-sm">EES Family</span>
                     <span className="text-xs text-gray-400 block">{new Date(photo.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
                   </div>
                 </div>
@@ -260,7 +266,10 @@
           
           <div className="py-8 flex flex-col items-center justify-center text-center px-4">
             {photos.length > visibleCount ? (
-               <button onClick={() => setVisibleCount(prev => prev + 5)} className="bg-gray-900 text-white font-semibold py-3 px-8 rounded-full hover:bg-gray-800 transition-colors shadow-md">
+               <button 
+                 onClick={() => setVisibleCount(prev => prev + 5)} 
+                 className="bg-gray-900 text-white font-semibold py-3 px-8 rounded-full hover:bg-gray-800 transition-colors shadow-md"
+               >
                  Load More Photos
                </button>
             ) : (
@@ -279,7 +288,6 @@
 
     function UploadScreen({ onCancel, onSubmit }) {
       const [imageUrl, setImageUrl] = useState(null);
-      const [name, setName] = useState(''); // New name state
       const [caption, setCaption] = useState('');
       const [selectedHashtag, setSelectedHashtag] = useState(HASHTAGS[0]);
       const [emojis, setEmojis] = useState([]); 
@@ -376,15 +384,7 @@
             }
             finalImageUrl = canvas.toDataURL('image/jpeg', 0.8);
           }
-          
-          // Submit Name as well, default to EES Family if left blank
-          onSubmit({ 
-            imageUrl: finalImageUrl, 
-            caption, 
-            hashtag: selectedHashtag,
-            name: name.trim() || "EES Family" 
-          });
-          
+          onSubmit({ imageUrl: finalImageUrl, caption, hashtag: selectedHashtag });
         } catch (error) {
           alert("Processing failed. Try again.");
           setIsProcessing(false);
@@ -461,19 +461,6 @@
           )}
 
           <div className="p-4 space-y-5">
-            {/* Added Name Input Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Name / Family Name</label>
-              <input 
-                type="text" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                placeholder="e.g. The Smith Family" 
-                maxLength={30}
-                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Caption</label>
               <textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Write a caption..." className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none h-24" />
@@ -487,7 +474,7 @@
               </div>
             </div>
             <div className="pt-4 flex gap-3">
-              <button onClick={() => { if (window.confirm("Discard this photo?")) { setImageUrl(null); setEmojis([]); setIsFit(false); setPan(50); setName(''); } }} className="flex-1 py-3 px-4 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">Discard</button>
+              <button onClick={() => { if (window.confirm("Discard this photo?")) { setImageUrl(null); setEmojis([]); setIsFit(false); setPan(50); } }} className="flex-1 py-3 px-4 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200">Discard</button>
               <button onClick={handleFinalSubmit} disabled={isProcessing} className="flex-1 py-3 px-4 rounded-xl font-bold text-yellow-900 bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 flex justify-center items-center">{isProcessing ? 'Processing...' : 'Share to Feed'}</button>
             </div>
           </div>
