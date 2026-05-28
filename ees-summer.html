@@ -99,7 +99,7 @@
 
       const handleAddPhoto = async (newPhoto) => {
         setView('feed');
-        setToastMessage('Uploading your photo to the vault...');
+        setToastMessage('Uploading! Leave this window open...');
 
         if (!SCRIPT_URL.startsWith('http')) {
           setPhotos(prev => [{ ...newPhoto, id: Date.now().toString(), timestamp: new Date().toISOString(), approved: true }, ...prev]);
