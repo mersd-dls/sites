@@ -43,6 +43,7 @@
 
 
     function App() {
+      // - Change "isAuthenticated" value to 'true' to bypass password requirement
       const [isAuthenticated, setIsAuthenticated] = useState(false);
       const [view, setView] = useState('feed');
       const [photos, setPhotos] = useState(INITIAL_PHOTOS);
