@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 
   <style>
     .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -19,7 +19,19 @@
 <body class="bg-gray-50">
   <div id="root"></div>
 
-  <script type="text/babel">
+  <script>
+  window.addEventListener("error", function(e) {
+    document.getElementById("root").innerHTML =
+      "<div style='padding:20px;font-family:Arial;color:#b00020'>" +
+      "<h2>Page error</h2>" +
+      "<pre style='white-space:pre-wrap'>" +
+      e.message + "\n" + e.filename + ":" + e.lineno +
+      "</pre></div>";
+  });
+</script>
+
+  <script type="text/babel" data-presets="env,react">
+  /** @jsxRuntime classic */
     const { useState, useEffect, useRef } = React;
 
     // ==========================================
