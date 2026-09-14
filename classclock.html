@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Day Clock</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .clock-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin-top: 20px;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+            drop-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .info {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .current-block {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .time-display {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .btn-secondary {
+            background-color: #2ecc71;
+            width: 100%;
+            padding: 10px;
+            font-weight: bold;
+        }
+        .btn-secondary:hover {
+            background-color: #27ae60;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal h2 { margin-top: 0; }
+        .input-group {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .input-group label { font-size: 0.9rem; font-weight: bold; }
+        .input-group input {
+            padding: 5px;
+            width: 180px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .copy-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            text-align: center;
+        }
+        .helper-text {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 8px;
+            margin-bottom: 0;
+        }
+        .modal-actions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-cancel { background-color: #95a5a6; }
+        .btn-cancel:hover { background-color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+    <div class="info">
+        <div class="current-block" id="currentBlockText">Waiting for clock...</div>
+        <div class="time-display" id="timeText">--:--</div>
+        <button onclick="openModal()">Customize Blocks</button>
+    </div>
+
+    <div class="clock-container">
+        <svg id="clock" viewBox="0 0 140 140"></svg>
+    </div>
+
+    <!-- Customization Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2>Customize Block Names</h2>
+            <p style="font-size: 0.85rem; color: #666;">Leave blank to use default names. Short names fit best in the pie slices!</p>
+            <div id="modalInputs"></div>
+            
+            <div class="copy-section">
+                <button class="btn-secondary" id="copyUrlBtn" onclick="copyCustomURL()">Copy Custom URL</button>
+                <p class="helper-text">Copy and bookmark your custom URL to return to this clock</p>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button onclick="saveCustomBlocks()">Save & Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_MINUTES = 420;
+        const START_HOUR = 8;
+        const START_MINUTE = 5;
+        const START_TIME_MINUTES = (START_HOUR * 60) + START_MINUTE; 
+
+        let blocks = [
+            { id: "arrival", defaultName: "Arrival", customName: "", minutes: 20, color: "#a2d9ce", showInnerLabel: false },
+            { id: "sel", defaultName: "Soft Start", customName: "", minutes: 20, color: "#f9e79f", showInnerLabel: false },
+            { id: "blockA", letter: "A", defaultName: "A Block", customName: "", minutes: 45, color: "#f5b7b1", showInnerLabel: true },
+            { id: "blockB", letter: "B", defaultName: "B Block", customName: "", minutes: 45, color: "#d2b4de", showInnerLabel: true },
+            { id: "blockC", letter: "C", defaultName: "C Block", customName: "", minutes: 45, color: "#aed6f1", showInnerLabel: true },
+            { id: "blockD", letter: "D", defaultName: "D Block", customName: "", minutes: 45, color: "#f5cba7", showInnerLabel: true },
+            { id: "blockE", letter: "E", defaultName: "E Block", customName: "", minutes: 45, color: "#abebc6", showInnerLabel: true },
+            { id: "blockF", letter: "F", defaultName: "F Block", customName: "", minutes: 45, color: "#f1948a", showInnerLabel: true },
+            { id: "blockG", letter: "G", defaultName: "G Block", customName: "", minutes: 45, color: "#bb8fce", showInnerLabel: true },
+            { id: "blockH", letter: "H", defaultName: "H Block", customName: "", minutes: 45, color: "#85c1e9", showInnerLabel: true },
+            { id: "dismissal", defaultName: "Dismissal", customName: "", minutes: 20, color: "#e5e7e9", showInnerLabel: false }
+        ];
+
+        // -------------------------------------------------------------
+        // URL Parameter Parsing
+        // -------------------------------------------------------------
+        const urlParams = new URLSearchParams(window.location.search);
+        blocks.forEach(block => {
+            if (block.letter && urlParams.has(block.letter)) {
+                block.customName = urlParams.get(block.letter);
+            }
+        });
+
+        // -------------------------------------------------------------
+        // Clock Rendering & Logic
+        // -------------------------------------------------------------
+        const svg = document.getElementById('clock');
+        let clockHand = null;
+
+        function formatTime(totalMinutes) {
+            let h = Math.floor(totalMinutes / 60);
+            let m = Math.floor(totalMinutes % 60);
+            let ampm = h >= 12 ? 'pm' : 'am';
+            h = h % 12 || 12;
+            let mStr = m < 10 ? '0' + m : m;
+            return `${h}:${mStr}${ampm}`;
+        }
+
+        function renderClock() {
+            svg.innerHTML = ''; 
+
+            const centerX = 70;
+            const centerY = 70;
+            const radius = 25; 
+            const strokeWidth = 50; 
+            const circumference = 2 * Math.PI * radius;
+
+            const pieGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            pieGroup.setAttribute("transform", `rotate(-90 ${centerX} ${centerY})`);
+            
+            let currentAngle = 0;
+            let currentDayMinutes = START_TIME_MINUTES;
+            
+            blocks.forEach((block, index) => {
+                const fraction = block.minutes / TOTAL_MINUTES;
+                const dashLength = fraction * circumference;
+                const gapLength = circumference - dashLength;
+                
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", centerX);
+                circle.setAttribute("cy", centerY);
+                circle.setAttribute("r", radius);
+                circle.setAttribute("fill", "transparent");
+                circle.setAttribute("stroke", block.color);
+                circle.setAttribute("stroke-width", strokeWidth);
+                circle.setAttribute("stroke-dasharray", `${dashLength} ${gapLength}`);
+                circle.setAttribute("stroke-dashoffset", `${-currentAngle * circumference / 360}`);
+                pieGroup.appendChild(circle);
+
+                if (index === 0) {
+                    const tardyAngle = currentAngle + (block.minutes / TOTAL_MINUTES) * 360;
+                    const radians = tardyAngle * (Math.PI / 180);
+                    const x2 = centerX + 50 * Math.cos(radians);
+                    const y2 = centerY + 50 * Math.sin(radians);
+
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", centerX);
+                    line.setAttribute("y1", centerY);
+                    line.setAttribute("x2", x2);
+                    line.setAttribute("y2", y2);
+                    line.setAttribute("stroke", "#e74c3c");
+                    line.setAttribute("stroke-width", "1.5");
+                    pieGroup.appendChild(line);
+                }
+
+                currentAngle += (block.minutes / TOTAL_MINUTES) * 360;
+            });
+            
+            svg.appendChild(pieGroup);
+
+            const dottedCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            dottedCircle.setAttribute("cx", centerX);
+            dottedCircle.setAttribute("cy", centerY);
+            dottedCircle.setAttribute("r", "52");
+            dottedCircle.setAttribute("fill", "none");
+            dottedCircle.setAttribute("stroke", "#7f8c8d");
+            dottedCircle.setAttribute("stroke-width", "0.5");
+            dottedCircle.setAttribute("stroke-dasharray", "1.5 2");
+            svg.appendChild(dottedCircle);
+
+            let startFraction = 0;
+            blocks.forEach((block) => {
+                const fraction = block.minutes / TOTAL_MINUTES;
+                
+                const startAngleDeg = (startFraction * 360) - 90;
+                const startAngleRad = startAngleDeg * (Math.PI / 180);
+                
+                const timeTextX = centerX + 57 * Math.cos(startAngleRad);
+                const timeTextY = centerY + 57 * Math.sin(startAngleRad);
+                
+                const timeLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                timeLabel.setAttribute("x", timeTextX);
+                timeLabel.setAttribute("y", timeTextY);
+                timeLabel.setAttribute("font-size", "3.5");
+                timeLabel.setAttribute("fill", "#34495e");
+                timeLabel.setAttribute("text-anchor", "middle");
+                timeLabel.setAttribute("dominant-baseline", "central");
+                timeLabel.textContent = formatTime(currentDayMinutes);
+                svg.appendChild(timeLabel);
+
+                if (block.showInnerLabel) {
+                    const midAngleDeg = ((startFraction + (fraction / 2)) * 360) - 90;
+                    const midAngleRad = midAngleDeg * (Math.PI / 180);
+                    
+                    const labelX = centerX + 32 * Math.cos(midAngleRad);
+                    const labelY = centerY + 32 * Math.sin(midAngleRad);
+
+                    const blockLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    blockLabel.setAttribute("x", labelX);
+                    blockLabel.setAttribute("y", labelY);
+                    blockLabel.setAttribute("font-size", "3.5");
+                    blockLabel.setAttribute("font-weight", "bold");
+                    blockLabel.setAttribute("fill", "rgba(0, 0, 0, 0.35)"); 
+                    blockLabel.setAttribute("text-anchor", "middle");
+                    blockLabel.setAttribute("dominant-baseline", "central");
+                    
+                    const displayName = block.customName.trim() !== "" ? block.customName : block.defaultName;
+                    blockLabel.textContent = displayName;
+                    svg.appendChild(blockLabel);
+                }
+
+                startFraction += fraction;
+                currentDayMinutes += block.minutes;
+            });
+
+            const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            dot.setAttribute("cx", centerX);
+            dot.setAttribute("cy", centerY);
+            dot.setAttribute("r", "2");
+            dot.setAttribute("fill", "#2c3e50");
+            svg.appendChild(dot);
+
+            clockHand = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            clockHand.setAttribute("x1", centerX);
+            clockHand.setAttribute("y1", centerY);
+            clockHand.setAttribute("x2", centerX);
+            clockHand.setAttribute("y2", centerY - 48); 
+            clockHand.setAttribute("stroke", "#2c3e50");
+            clockHand.setAttribute("stroke-width", "1.2");
+            clockHand.setAttribute("stroke-linecap", "round");
+            svg.appendChild(clockHand);
+        }
+
+        function updateClock() {
+            if (!clockHand) return;
+
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+
+            const displayHours = hours % 12 || 12;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayMins = minutes < 10 ? '0' + minutes : minutes;
+            document.getElementById('timeText').textContent = `${displayHours}:${displayMins} ${ampm}`;
+
+            let elapsedMinutes = ((hours - START_HOUR) * 60) + (minutes - START_MINUTE) + (now.getSeconds() / 60);
+            let currentBlockText = "Outside School Hours";
+
+            if (elapsedMinutes >= 0 && elapsedMinutes <= TOTAL_MINUTES) {
+                let passed = 0;
+                for (let block of blocks) {
+                    if (elapsedMinutes >= passed && elapsedMinutes < passed + block.minutes) {
+                        const displayName = block.customName.trim() !== "" ? block.customName : block.defaultName;
+                        currentBlockText = `Current: ${displayName}`;
+                        break;
+                    }
+                    passed += block.minutes;
+                }
+                
+                const rotationDegrees = (elapsedMinutes / TOTAL_MINUTES) * 360;
+                clockHand.setAttribute("transform", `rotate(${rotationDegrees}, 70, 70)`);
+                clockHand.style.display = "block";
+            } else {
+                clockHand.style.display = "none";
+                if (elapsedMinutes < 0) currentBlockText = "Before School";
+                if (elapsedMinutes > TOTAL_MINUTES) currentBlockText = "After School";
+            }
+
+            document.getElementById('currentBlockText').textContent = currentBlockText;
+        }
+
+        // -------------------------------------------------------------
+        // Modal & URL Generation Logic
+        // -------------------------------------------------------------
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalInputs = document.getElementById('modalInputs');
+
+        function openModal() {
+            modalInputs.innerHTML = ''; 
+            const customizableBlocks = blocks.filter(b => b.showInnerLabel);
+
+            customizableBlocks.forEach((block) => {
+                const group = document.createElement('div');
+                group.className = 'input-group';
+                
+                const originalIndex = blocks.findIndex(b => b.id === block.id);
+                const startTimeMinutes = START_TIME_MINUTES + blocks.slice(0, originalIndex).reduce((acc, curr) => acc + curr.minutes, 0);
+
+                const label = document.createElement('label');
+                label.textContent = block.defaultName + " (" + formatTime(startTimeMinutes) + ")";
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'input_' + block.id;
+                input.value = block.customName;
+                input.placeholder = block.defaultName;
+
+                group.appendChild(label);
+                group.appendChild(input);
+                modalInputs.appendChild(group);
+            });
+            modalOverlay.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+        }
+
+        function saveCustomBlocks() {
+            blocks.forEach(block => {
+                if (block.showInnerLabel) {
+                    const inputElem = document.getElementById('input_' + block.id);
+                    if (inputElem) {
+                        block.customName = inputElem.value;
+                    }
+                }
+            });
+            closeModal();
+            renderClock(); 
+            updateClock();
+        }
+
+        function copyCustomURL() {
+            const params = new URLSearchParams();
+            
+            // Read directly from the inputs in the modal so users don't have to hit save first
+            blocks.forEach(block => {
+                if (block.showInnerLabel) {
+                    const inputElem = document.getElementById('input_' + block.id);
+                    const currentVal = inputElem ? inputElem.value.trim() : block.customName.trim();
+                    if (block.letter && currentVal !== "") {
+                        params.set(block.letter, currentVal);
+                    }
+                }
+            });
+
+            const baseUrl = window.location.href.split('?')[0];
+            const newUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+            
+            navigator.clipboard.writeText(newUrl).then(() => {
+                const btn = document.getElementById('copyUrlBtn');
+                btn.textContent = "Copied!";
+                btn.style.backgroundColor = "#27ae60"; // Make it stay dark green briefly
+                setTimeout(() => {
+                    btn.textContent = "Copy Custom URL";
+                    btn.style.backgroundColor = ""; // Revert to stylesheet default
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert("Clipboard access denied. Here is your URL:\n\n" + newUrl);
+            });
+        }
+
+        // Initialization
+        renderClock();
+        setInterval(updateClock, 1000);
+        updateClock(); 
+    </script>
+</body>
+</html>
