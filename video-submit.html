@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Photobooth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fef2f2 0%, #39323f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .status.recording {
+            background: #fee;
+            color: #c33;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status.countdown {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .timer {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #667eea;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer.warning {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        #vuMeter {
+            width: 100%;
+            height: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            max-height: 400px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #startBtn {
+            background: #667eea;
+            color: white;
+        }
+
+        #startBtn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #stopBtn {
+            background: #ef4444;
+            color: white;
+        }
+
+        #stopBtn:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        #retakeBtn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        #retakeBtn:hover:not(:disabled) {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        #submitBtn {
+            background: #10b981;
+            color: white;
+        }
+
+        #submitBtn:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info {
+            background: #e0e7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #4c51bf;
+            line-height: 1.6;
+        }
+
+        .info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .format-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        #reviewContainer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 Video Photobooth</h1>
+        <p class="subtitle">Record up to 30-seconds of video.<span class="format-badge">WebM Format</span></p>
+
+        <div class="status" id="status">Ready to record</div>
+        <div class="timer" id="timer">00:00 / 00:30</div>
+
+        <canvas id="vuMeter" width="620" height="10"></canvas>
+
+        <div class="video-container">
+            <video id="videoPreview" autoplay muted playsinline></video>
+        </div>
+
+        <div id="recordingControls">
+            <div class="controls">
+                <button id="startBtn">Start Recording</button>
+                <button id="stopBtn" disabled>Stop Recording</button>
+            </div>
+        </div>
+
+        <div id="reviewContainer">
+            <input type="text" id="nameInput" class="name-input" placeholder="Enter your name (e.g., John Smith)">
+            <div class="controls">
+                <button id="retakeBtn">Retake</button>
+                <button id="submitBtn">Submit Video</button>
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>Instructions:</strong>
+            1. Click "Start Recording" and get ready!<br>
+            2. After a 3-2-1 countdown, recording will begin automatically<br>
+            3. Recording stops automatically after 30 seconds<br>
+            4. Review your video and retake if needed<br>
+            5. Enter your name and submit!
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE WITH YOUR APPS SCRIPT DEPLOYMENT URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxpZnkUym5QkNNatERvDa3NYkK_h7m9DAJ0WXf0Eh0oB3MkTMEBkBUk0IrK1mcTu4OW/exec';
+        const MAX_RECORDING_TIME = 30;
+
+        let mediaRecorder;
+        let recordedChunks = [];
+        let videoBlob;
+        let stream;
+        let startTime;
+        let timerInterval;
+        let recordingTimeout;
+
+        let audioContext, analyser, dataArray, vuCanvas, vuCanvasCtx, drawVisual;
+        let currentVuLevel = 0;
+
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const status = document.getElementById('status');
+        const timer = document.getElementById('timer');
+        const videoPreview = document.getElementById('videoPreview');
+        const nameInput = document.getElementById('nameInput');
+        const recordingControls = document.getElementById('recordingControls');
+        const reviewContainer = document.getElementById('reviewContainer');
+        
+        vuCanvas = document.getElementById('vuMeter');
+        vuCanvasCtx = vuCanvas.getContext('2d');
+
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 }, 
+                    audio: true 
+                });
+                videoPreview.srcObject = stream;
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512;
+                const bufferLength = analyser.fftSize;
+                dataArray = new Uint8Array(bufferLength);
+                source.connect(analyser);
+
+                drawVuMeter();
+            } catch (err) {
+                alert('Error accessing camera: ' + err.message);
+                status.textContent = '❌ Camera access denied';
+            }
+        }
+
+        initCamera();
+
+        function drawVuMeter() {
+            drawVisual = requestAnimationFrame(drawVuMeter);
+            analyser.getByteTimeDomainData(dataArray);
+
+            let sumSquares = 0.0;
+            for (let i = 0; i < dataArray.length; i++) {
+                const val = (dataArray[i] - 128) / 128.0;
+                sumSquares += val * val;
+            }
+            
+            const rms = Math.sqrt(sumSquares / dataArray.length);
+            const maxLevel = 0.5;
+            let targetLevel = Math.min(1, rms / maxLevel) * vuCanvas.width;
+            
+            currentVuLevel += (targetLevel - currentVuLevel) * 0.3;
+
+            vuCanvasCtx.clearRect(0, 0, vuCanvas.width, vuCanvas.height);
+
+            const gradient = vuCanvasCtx.createLinearGradient(0, 0, vuCanvas.width, 0);
+            gradient.addColorStop(0, '#10b981');
+            gradient.addColorStop(0.6, '#f59e0b');
+            gradient.addColorStop(0.9, '#ef4444');
+
+            vuCanvasCtx.fillStyle = gradient;
+            vuCanvasCtx.fillRect(0, 0, currentVuLevel, vuCanvas.height);
+        }
+
+        async function startCountdown() {
+            startBtn.disabled = true;
+            status.classList.add('countdown');
+            
+            for (let i = 3; i > 0; i--) {
+                status.textContent = i;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            status.classList.remove('countdown');
+            startRecording();
+        }
+
+        startBtn.addEventListener('click', startCountdown);
+        stopBtn.addEventListener('click', stopRecording);
+
+        function startRecording() {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            recordedChunks = [];
+            
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp8,opus',
+                videoBitsPerSecond: 5000000
+            });
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoUrl = URL.createObjectURL(videoBlob);
+                videoPreview.srcObject = null;
+                videoPreview.src = videoUrl;
+                videoPreview.muted = false;
+                videoPreview.controls = true;
+                
+                recordingControls.style.display = 'none';
+                reviewContainer.style.display = 'block';
+                
+                status.textContent = '✓ Recording complete - Review your video';
+                status.classList.remove('recording');
+                
+                stopBtn.disabled = true;
+                startBtn.disabled = false;
+            };
+
+            mediaRecorder.start();
+
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 100);
+
+            status.textContent = '🔴 Recording...';
+            status.classList.add('recording');
+            
+            stopBtn.disabled = false;
+
+            recordingTimeout = setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    stopRecording();
+                }
+            }, MAX_RECORDING_TIME * 1000);
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                clearInterval(timerInterval);
+                clearTimeout(recordingTimeout);
+            }
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const remaining = MAX_RECORDING_TIME - elapsed;
+            
+            const elapsedMin = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const elapsedSec = (elapsed % 60).toString().padStart(2, '0');
+            const totalMin = Math.floor(MAX_RECORDING_TIME / 60).toString().padStart(2, '0');
+            const totalSec = (MAX_RECORDING_TIME % 60).toString().padStart(2, '0');
+            
+            timer.textContent = `${elapsedMin}:${elapsedSec} / ${totalMin}:${totalSec}`;
+            
+            if (remaining <= 10) {
+                timer.classList.add('warning');
+            } else {
+                timer.classList.remove('warning');
+            }
+        }
+
+        retakeBtn.addEventListener('click', async () => {
+            reviewContainer.style.display = 'none';
+            recordingControls.style.display = 'block';
+            
+            videoPreview.src = '';
+            videoPreview.controls = false;
+            videoPreview.muted = true;
+            videoPreview.srcObject = stream;
+            
+            nameInput.value = '';
+            timer.textContent = '00:00 / 00:30';
+            timer.classList.remove('warning');
+            status.textContent = 'Ready to record';
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Video';
+            submitBtn.style.background = '#10b981';
+        });
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64data = reader.result.split(',')[1];
+                    resolve(base64data);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        submitBtn.addEventListener('click', async () => {
+            if (!videoBlob) {
+                alert('No video to submit!');
+                return;
+            }
+
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Please enter your name!');
+                nameInput.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+
+            try {
+                const base64Data = await blobToBase64(videoBlob);
+                
+                const payload = {
+                    fileName: `${name}.webm`,
+                    mimeType: 'video/webm',
+                    fileData: base64Data
+                };
+
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    alert('✅ Video submitted successfully!\nThank you, ' + name + '!');
+                    submitBtn.textContent = '✓ Submitted!';
+                    submitBtn.style.background = '#059669';
+                    
+                    setTimeout(() => {
+                        retakeBtn.click();
+                    }, 2000);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (err) {
+                alert('Error submitting video: ' + err.message);
+                submitBtn.textContent = 'Submit Video';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
